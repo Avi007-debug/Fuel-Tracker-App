@@ -1,0 +1,97 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import 'package:fuel_tracker_app/core/database/database_service.dart';
+import 'package:fuel_tracker_app/services/trip_service.dart';
+import 'package:fuel_tracker_app/services/fuel_service.dart';
+import 'package:fuel_tracker_app/services/vehicle_service.dart';
+import 'package:fuel_tracker_app/models/trip.dart';
+import 'package:fuel_tracker_app/models/fuel_entry.dart';
+import 'package:fuel_tracker_app/models/vehicle_profile.dart';
+
+// ─── Service Providers ───────────────────────────────────────────────
+
+final databaseServiceProvider = Provider<DatabaseService>((ref) {
+  return DatabaseService.instance;
+});
+
+final tripServiceProvider = Provider<TripService>((ref) {
+  return TripService(ref.read(databaseServiceProvider));
+});
+
+final fuelServiceProvider = Provider<FuelService>((ref) {
+  return FuelService(
+    ref.read(databaseServiceProvider),
+    ref.read(tripServiceProvider),
+  );
+});
+
+final vehicleServiceProvider = Provider<VehicleService>((ref) {
+  return VehicleService(ref.read(databaseServiceProvider));
+});
+
+// ─── Data Providers ──────────────────────────────────────────────────
+
+/// All trips, refreshable.
+final allTripsProvider = FutureProvider<List<Trip>>((ref) async {
+  return ref.read(tripServiceProvider).getAllTrips();
+});
+
+/// Today's trips only.
+final todayTripsProvider = FutureProvider<List<Trip>>((ref) async {
+  return ref.read(tripServiceProvider).getTodayTrips();
+});
+
+/// Today's total distance.
+final todayDistanceProvider = FutureProvider<double>((ref) async {
+  return ref.read(tripServiceProvider).getTodayDistance();
+});
+
+/// This month's total distance.
+final monthDistanceProvider = FutureProvider<double>((ref) async {
+  return ref.read(tripServiceProvider).getMonthDistance();
+});
+
+/// All fuel entries, refreshable.
+final allFuelEntriesProvider = FutureProvider<List<FuelEntry>>((ref) async {
+  return ref.read(fuelServiceProvider).getAllEntries();
+});
+
+/// Estimated fuel remaining (litres).
+final fuelRemainingProvider = FutureProvider<double>((ref) async {
+  return ref.read(fuelServiceProvider).getEstimatedFuelRemaining();
+});
+
+/// Estimated range remaining (km).
+final estimatedRangeProvider = FutureProvider<double>((ref) async {
+  return ref.read(fuelServiceProvider).getEstimatedRange();
+});
+
+/// Rolling average mileage (km/L).
+final averageMileageProvider = FutureProvider<double>((ref) async {
+  return ref.read(fuelServiceProvider).getRollingAverageMileage();
+});
+
+/// Monthly fuel spend (₹).
+final monthSpendProvider = FutureProvider<double>((ref) async {
+  return ref.read(fuelServiceProvider).getMonthSpend();
+});
+
+/// Vehicle profile.
+final vehicleProfileProvider = FutureProvider<VehicleProfile?>((ref) async {
+  return ref.read(vehicleServiceProvider).getProfile();
+});
+
+/// Whether onboarding is complete.
+final isOnboardedProvider = FutureProvider<bool>((ref) async {
+  return ref.read(vehicleServiceProvider).isOnboarded();
+});
+
+/// Lifetime total distance.
+final totalDistanceProvider = FutureProvider<double>((ref) async {
+  return ref.read(tripServiceProvider).getTotalDistance();
+});
+
+/// Total trip count.
+final tripCountProvider = FutureProvider<int>((ref) async {
+  return ref.read(tripServiceProvider).getTripCount();
+});
