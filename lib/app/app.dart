@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:fuel_tracker_app/app/theme.dart';
 import 'package:fuel_tracker_app/app/router.dart';
+import 'package:fuel_tracker_app/features/onboarding/screen.dart';
 import 'package:fuel_tracker_app/providers/app_providers.dart';
 
 /// Root application widget.
@@ -32,7 +33,7 @@ class ActivaTrackerApp extends ConsumerWidget {
           data: (isOnboarded) {
             if (!isOnboarded) {
               // Show onboarding screen
-              return const OnboardingRedirect();
+              return const OnboardingScreen();
             }
             return child ?? const SizedBox();
           },
@@ -41,20 +42,6 @@ class ActivaTrackerApp extends ConsumerWidget {
         );
       },
     );
-  }
-}
-
-/// Redirects to onboarding screen.
-class OnboardingRedirect extends StatelessWidget {
-  const OnboardingRedirect({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    // Use WidgetsBinding to navigate after build
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      // The router will handle the redirect via the path
-    });
-    return const _SplashScreen();
   }
 }
 

@@ -11,11 +11,13 @@ class FuelController {
     required double amountPaid,
     required double pricePerLitre,
     bool isTankFull = false,
+    String? receiptPhotoPath,
   }) async {
     await _ref.read(fuelServiceProvider).addFuelByAmount(
           amountPaid: amountPaid,
           pricePerLitre: pricePerLitre,
           isTankFull: isTankFull,
+          receiptPhotoPath: receiptPhotoPath,
         );
     _refreshFuel();
   }
@@ -24,11 +26,13 @@ class FuelController {
     required double litresFilled,
     required double pricePerLitre,
     bool isTankFull = false,
+    String? receiptPhotoPath,
   }) async {
     await _ref.read(fuelServiceProvider).addFuelByLitres(
           litresFilled: litresFilled,
           pricePerLitre: pricePerLitre,
           isTankFull: isTankFull,
+          receiptPhotoPath: receiptPhotoPath,
         );
     _refreshFuel();
   }

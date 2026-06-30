@@ -5,6 +5,7 @@ import 'package:fuel_tracker_app/app/theme.dart';
 import 'package:fuel_tracker_app/models/route_type.dart';
 import 'package:fuel_tracker_app/providers/app_providers.dart';
 import 'package:fuel_tracker_app/core/fuel_price/fuel_price_service.dart';
+import 'package:image_picker/image_picker.dart';
 
 /// Quick-action grid matching the plan's 6 primary actions:
 /// 🟢 Going to College, 🔵 Returned Home, 🟡 Fuel Filled,
@@ -133,6 +134,7 @@ class QuickActions extends ConsumerWidget {
     bool isLitresMode = false;
     bool isLoadingPrice = true;
     bool hasFetchedPrice = false;
+    String? receiptPhotoPath;
 
     // Try to fetch live price
     final livePrice = await FuelPriceService.fetchPetrolPrice();
@@ -261,6 +263,33 @@ class QuickActions extends ConsumerWidget {
                 controlAffinity: ListTileControlAffinity.leading,
                 contentPadding: EdgeInsets.zero,
               ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () async {
+                        final picker = ImagePicker();
+                        final image = await picker.pickImage(source: ImageSource.gallery);
+                        if (image != null) {
+                          setState(() {
+                            receiptPhotoPath = image.path;
+                          });
+                        }
+                      },
+                      icon: const Icon(Icons.receipt_long_outlined),
+                      label: Text(receiptPhotoPath == null ? 'Attach Receipt' : 'Receipt Attached'),
+                    ),
+                  ),
+                  if (receiptPhotoPath != null) ...[
+                    const SizedBox(width: 8),
+                    IconButton(
+                      onPressed: () => setState(() => receiptPhotoPath = null),
+                      icon: const Icon(Icons.clear, color: AppTheme.accentRed),
+                    ),
+                  ],
+                ],
+              ),
               const SizedBox(height: 16),
               SizedBox(
                 width: double.infinity,
@@ -291,6 +320,7 @@ class QuickActions extends ConsumerWidget {
                             amountPaid: amount,
                             pricePerLitre: price,
                             isTankFull: isTankFull,
+                            receiptPhotoPath: receiptPhotoPath,
                           );
                     } else {
                       final litres =
@@ -301,6 +331,7 @@ class QuickActions extends ConsumerWidget {
                             litresFilled: litres,
                             pricePerLitre: price,
                             isTankFull: isTankFull,
+                            receiptPhotoPath: receiptPhotoPath,
                           );
                     }
 

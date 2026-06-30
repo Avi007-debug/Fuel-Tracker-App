@@ -18,6 +18,7 @@ class FuelService {
     required double amountPaid,
     required double pricePerLitre,
     bool isTankFull = false,
+    String? receiptPhotoPath,
   }) async {
     final litres = amountPaid / pricePerLitre;
     return _addFuelEntry(
@@ -25,6 +26,7 @@ class FuelService {
       litresFilled: litres,
       pricePerLitre: pricePerLitre,
       isTankFull: isTankFull,
+      receiptPhotoPath: receiptPhotoPath,
     );
   }
 
@@ -33,12 +35,14 @@ class FuelService {
     required double litresFilled,
     required double pricePerLitre,
     bool isTankFull = false,
+    String? receiptPhotoPath,
   }) async {
     return _addFuelEntry(
       amountPaid: litresFilled * pricePerLitre,
       litresFilled: litresFilled,
       pricePerLitre: pricePerLitre,
       isTankFull: isTankFull,
+      receiptPhotoPath: receiptPhotoPath,
     );
   }
 
@@ -47,6 +51,7 @@ class FuelService {
     required double litresFilled,
     required double pricePerLitre,
     required bool isTankFull,
+    String? receiptPhotoPath,
   }) async {
     final allEntries = await _db.getAllFuelEntries();
 
@@ -75,6 +80,7 @@ class FuelService {
       kmSinceLastFill: kmSinceLastFill,
       calculatedMileage: mileage,
       costPerKm: costKm,
+      receiptPhotoPath: receiptPhotoPath,
     );
 
     await _db.addFuelEntry(entry);

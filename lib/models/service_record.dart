@@ -44,6 +44,7 @@ class ServiceRecord {
   final DateTime completedAt;
   final double odometerKm;
   final String? notes;
+  final double? cost;
 
   const ServiceRecord({
     required this.id,
@@ -51,6 +52,7 @@ class ServiceRecord {
     required this.completedAt,
     required this.odometerKm,
     this.notes,
+    this.cost,
   });
 
   ServiceRecord copyWith({
@@ -59,6 +61,7 @@ class ServiceRecord {
     DateTime? completedAt,
     double? odometerKm,
     String? notes,
+    double? cost,
   }) {
     return ServiceRecord(
       id: id ?? this.id,
@@ -66,6 +69,7 @@ class ServiceRecord {
       completedAt: completedAt ?? this.completedAt,
       odometerKm: odometerKm ?? this.odometerKm,
       notes: notes ?? this.notes,
+      cost: cost ?? this.cost,
     );
   }
 
@@ -75,6 +79,7 @@ class ServiceRecord {
         'completedAt': completedAt.toIso8601String(),
         'odometerKm': odometerKm,
         'notes': notes,
+        'cost': cost,
       };
 
   factory ServiceRecord.fromJson(Map<String, dynamic> json) {
@@ -84,6 +89,7 @@ class ServiceRecord {
       completedAt: DateTime.parse(json['completedAt'] as String),
       odometerKm: (json['odometerKm'] as num).toDouble(),
       notes: json['notes'] as String?,
+      cost: (json['cost'] as num?)?.toDouble(),
     );
   }
 }

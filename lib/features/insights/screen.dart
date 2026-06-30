@@ -11,16 +11,82 @@ import 'package:fuel_tracker_app/features/insights/widgets/service_status_panel.
 ///
 /// Monthly summary card, AI insight chips, graph browser,
 /// Vehicle Health Score gauge, service status panel, export buttons.
-class InsightsScreen extends ConsumerWidget {
+class InsightsScreen extends ConsumerStatefulWidget {
   const InsightsScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<InsightsScreen> createState() => _InsightsScreenState();
+}
+
+class _InsightsScreenState extends ConsumerState<InsightsScreen> {
+  String _selectedCategory = 'Riding';
+
+  Widget _buildCategoryChip(String category) {
+    final selected = _selectedCategory == category;
+    return ChoiceChip(
+      label: Text(category),
+      selected: selected,
+      onSelected: (val) {
+        if (val) {
+          setState(() {
+            _selectedCategory = category;
+          });
+        }
+      },
+      selectedColor: AppTheme.accentGreen.withAlpha(50),
+      labelStyle: TextStyle(
+        color: selected ? AppTheme.accentGreen : AppTheme.textMuted,
+        fontWeight: selected ? FontWeight.bold : FontWeight.normal,
+      ),
+    );
+  }
+
+  List<Widget> _getCategoryCharts() {
+    switch (_selectedCategory) {
+      case 'Riding':
+        return const [
+          DailyDistanceChart(),
+          CalendarHeatmap(),
+          MonthlyDistanceChart(),
+          CumulativeDistanceChart(),
+          WeeklyPatternChart(),
+          RouteDistributionChart(),
+        ];
+      case 'Fuel':
+        return const [
+          MileageTrendChart(),
+          FuelEconomyDistributionChart(),
+          FuelTankLevelGauge(),
+          FuelConsumptionChart(),
+          PetrolPriceTrendChart(),
+        ];
+      case 'Expenses':
+        return const [
+          MonthlySpendChart(),
+          MonthlyExpenseForecastChart(),
+          CostPerKmChart(),
+          ExpenseBreakdownChart(),
+          RefillHistoryTimelineChart(),
+        ];
+      case 'AI Diagnostics':
+        return const [
+          VehicleHealthScoreGauge(),
+          AiInsightsGrid(),
+        ];
+      default:
+        return [];
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final monthDistance = ref.watch(monthDistanceProvider);
     final monthSpend = ref.watch(monthSpendProvider);
     final avgMileage = ref.watch(averageMileageProvider);
     final totalDistance = ref.watch(totalDistanceProvider);
     final tripCount = ref.watch(tripCountProvider);
+
+    final charts = _getCategoryCharts();
 
     return Scaffold(
       body: SafeArea(
@@ -41,7 +107,6 @@ class InsightsScreen extends ConsumerWidget {
                     // Export buttons
                     IconButton(
                       onPressed: () {
-                        // TODO: PDF export
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
                               content: Text('PDF export coming in v1.5')),
@@ -52,7 +117,6 @@ class InsightsScreen extends ConsumerWidget {
                     ),
                     IconButton(
                       onPressed: () {
-                        // TODO: CSV export
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
                               content: Text('CSV export coming in v1.5')),
@@ -141,7 +205,7 @@ class InsightsScreen extends ConsumerWidget {
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-                child: ServiceStatusPanel(),
+                child: const ServiceStatusPanel(),
               ),
             ),
 
@@ -200,74 +264,36 @@ class InsightsScreen extends ConsumerWidget {
                 ),
               ),
             ),
-            // Mileage Trend Chart
+
+            // Horizontal Category Selector Chips
             SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-                child: MileageTrendChart(),
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: Row(
+                  children: [
+                    _buildCategoryChip('Riding'),
+                    const SizedBox(width: 8),
+                    _buildCategoryChip('Fuel'),
+                    const SizedBox(width: 8),
+                    _buildCategoryChip('Expenses'),
+                    const SizedBox(width: 8),
+                    _buildCategoryChip('AI Diagnostics'),
+                  ],
+                ),
               ),
             ),
-            // Daily Distance Chart
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-                child: DailyDistanceChart(),
-              ),
-            ),
-            // Cost per km Chart
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-                child: CostPerKmChart(),
-              ),
-            ),
-            // Fuel Consumption Chart
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-                child: FuelConsumptionChart(),
-              ),
-            ),
-            // Petrol Price Trend Chart
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-                child: PetrolPriceTrendChart(),
-              ),
-            ),
-            // Monthly Spend Chart
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-                child: MonthlySpendChart(),
-              ),
-            ),
-            // Monthly Distance Chart
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-                child: MonthlyDistanceChart(),
-              ),
-            ),
-            // Route Distribution Chart
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-                child: RouteDistributionChart(),
-              ),
-            ),
-            // Cumulative Distance Chart
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-                child: CumulativeDistanceChart(),
-              ),
-            ),
-            // Weekly Pattern Chart
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-                child: WeeklyPatternChart(),
+
+            // Dynamically Render Category Charts
+            SliverList(
+              delegate: SliverChildBuilderDelegate(
+                (context, index) {
+                  return Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+                    child: charts[index],
+                  );
+                },
+                childCount: charts.length,
               ),
             ),
 

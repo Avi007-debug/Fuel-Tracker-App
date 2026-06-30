@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest.dart' as tz;
@@ -176,6 +177,34 @@ class NotificationService {
   /// Cancel evening return reminder.
   Future<void> cancelEveningReminder() async {
     await _notifications.cancel(_idEveningReminder);
+  }
+
+  static const _idEveningEscalation = 102;
+
+  /// Immediately show evening escalation reminder.
+  Future<void> showEveningEscalation() async {
+    await _notifications.show(
+      _idEveningEscalation,
+      '🏠 Return trip pending!',
+      'You logged going to college but haven\'t logged returning home yet.',
+      const NotificationDetails(
+        android: AndroidNotificationDetails(
+          _channelIdReminders,
+          _channelNameReminders,
+          channelDescription: _channelDescReminders,
+          importance: Importance.max,
+          priority: Priority.max,
+          playSound: true,
+          enableVibration: true,
+        ),
+        iOS: DarwinNotificationDetails(),
+      ),
+    );
+  }
+
+  /// Cancel evening escalation.
+  Future<void> cancelEveningEscalation() async {
+    await _notifications.cancel(_idEveningEscalation);
   }
 
   tz.TZDateTime _nextEveningTime() {

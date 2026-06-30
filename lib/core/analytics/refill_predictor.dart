@@ -1,5 +1,4 @@
 import 'package:fuel_tracker_app/models/trip.dart';
-import 'package:fuel_tracker_app/models/fuel_entry.dart';
 
 /// Next refill predictor — estimates when the next refill will be needed.
 /// 

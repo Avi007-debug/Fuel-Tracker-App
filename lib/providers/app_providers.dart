@@ -9,6 +9,8 @@ import 'package:fuel_tracker_app/models/fuel_entry.dart';
 import 'package:fuel_tracker_app/models/vehicle_profile.dart';
 import 'package:fuel_tracker_app/models/service_record.dart';
 import 'package:fuel_tracker_app/core/analytics/service_engine.dart';
+import 'package:fuel_tracker_app/core/analytics/health_score.dart';
+import 'package:fuel_tracker_app/core/analytics/refill_predictor.dart';
 
 // ─── Service Providers ───────────────────────────────────────────────
 
@@ -115,5 +117,63 @@ final serviceStatusProvider = FutureProvider<List<ServiceStatus>>((ref) async {
     records: records,
     currentOdometerKm: totalDistance,
     vehicle: profile,
+  );
+});
+
+/// Composite Vehicle Health Score (0.0 to 1.0).
+final vehicleHealthScoreProvider = FutureProvider<double>((ref) async {
+  final fuelEntries = await ref.read(allFuelEntriesProvider.future);
+  final serviceRecords = await ref.read(allServiceRecordsProvider.future);
+  final totalDistance = await ref.read(totalDistanceProvider.future);
+  final profile = await ref.read(vehicleProfileProvider.future);
+  
+  if (profile == null) return 1.0;
+  
+  return HealthScore.compute(
+    fuelEntries: fuelEntries,
+    serviceRecords: serviceRecords,
+    totalDistanceKm: totalDistance,
+    serviceIntervalKm: profile.serviceIntervalKm,
+  );
+});
+
+/// Category health scores.
+final healthCategoryScoresProvider = FutureProvider<Map<String, double>>((ref) async {
+  final fuelEntries = await ref.read(allFuelEntriesProvider.future);
+  final serviceRecords = await ref.read(allServiceRecordsProvider.future);
+  final totalDistance = await ref.read(totalDistanceProvider.future);
+  final profile = await ref.read(vehicleProfileProvider.future);
+  
+  if (profile == null) return {};
+  
+  return HealthScore.categoryScores(
+    fuelEntries: fuelEntries,
+    serviceRecords: serviceRecords,
+    totalDistanceKm: totalDistance,
+    serviceIntervalKm: profile.serviceIntervalKm,
+  );
+});
+
+/// Next refill prediction.
+final refillPredictionProvider = FutureProvider<RefillPrediction>((ref) async {
+  final trips = await ref.read(allTripsProvider.future);
+  final fuelRemaining = await ref.read(fuelRemainingProvider.future);
+  final avgMileage = await ref.read(averageMileageProvider.future);
+  final profile = await ref.read(vehicleProfileProvider.future);
+  
+  if (profile == null) {
+    return RefillPrediction(
+      predictedDate: DateTime.now(),
+      daysRemaining: 0,
+      kmRemaining: 0,
+      confidence: 0.0,
+    );
+  }
+  
+  return RefillPredictor.predictNextRefill(
+    trips: trips,
+    fuelRemainingL: fuelRemaining,
+    averageMileageKmPerL: avgMileage,
+    reserveL: profile.reserveL,
   );
 });

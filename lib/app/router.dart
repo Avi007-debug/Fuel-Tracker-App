@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:fuel_tracker_app/features/dashboard/screen.dart';
 import 'package:fuel_tracker_app/features/trips/screen.dart';
@@ -9,7 +8,6 @@ import 'package:fuel_tracker_app/features/insights/screen.dart';
 import 'package:fuel_tracker_app/features/settings/screen.dart';
 import 'package:fuel_tracker_app/features/ai_chat/screen.dart';
 import 'package:fuel_tracker_app/features/onboarding/screen.dart';
-import 'package:fuel_tracker_app/providers/app_providers.dart';
 
 /// Named route paths.
 class AppRoutes {
