@@ -7,6 +7,8 @@ import 'package:fuel_tracker_app/core/analytics/fuel_estimator.dart';
 import 'package:fuel_tracker_app/core/analytics/service_engine.dart';
 import 'package:fuel_tracker_app/models/route_type.dart';
 import 'package:fuel_tracker_app/utils/date_helpers.dart';
+import 'package:fuel_tracker_app/services/trip_service.dart';
+import 'package:fuel_tracker_app/services/fuel_service.dart';
 
 @pragma('vm:entry-point')
 void callbackDispatcher() {
@@ -20,7 +22,9 @@ void callbackDispatcher() {
       
       final db = DatabaseService.instance;
       final trips = await db.getAllTrips();
-      final fuelEntries = await db.getAllFuelEntries();
+      final tripService = TripService(db);
+      final fuelService = FuelService(db, tripService);
+      final fuelEntries = await fuelService.getAllEntries();
       final serviceRecords = await db.getAllServiceRecords();
       final vehicle = await db.getVehicleProfile();
 
@@ -46,22 +50,8 @@ void callbackDispatcher() {
 
       // ─── 2. Low Fuel Alert Check ──────────────────────────────────
       if (fuelEntries.isNotEmpty && vehicle != null) {
-        final lastEntry = fuelEntries.first;
-        
-        // Calculate distance since last fill
-        final tripsSinceLastFill = trips.where((t) => t.timestamp.isAfter(lastEntry.timestamp)).toList();
-        final kmSinceLastFill = tripsSinceLastFill.fold<double>(0.0, (sum, t) => sum + t.distanceKm);
-
-        final fuelRemaining = FuelEstimator.estimateRemaining(
-          lastEntry: lastEntry,
-          kmSinceLastFill: kmSinceLastFill,
-          entries: fuelEntries,
-        );
-
-        final rangeRemaining = FuelEstimator.estimateRange(
-          fuelRemainingL: fuelRemaining,
-          entries: fuelEntries,
-        );
+        final fuelRemaining = await fuelService.getEstimatedFuelRemaining();
+        final rangeRemaining = await fuelService.getEstimatedRange();
 
         if (FuelEstimator.isLowFuel(estimatedRangeKm: rangeRemaining)) {
           dev.log('Low fuel alert range remaining: $rangeRemaining km');

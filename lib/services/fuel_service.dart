@@ -53,13 +53,13 @@ class FuelService {
     required bool isTankFull,
     String? receiptPhotoPath,
   }) async {
-    final allEntries = await _db.getAllFuelEntries();
+    final allEntries = await getAllEntries();
 
     // Distance since last fill.
     double kmSinceLastFill = 0.0;
     if (allEntries.isNotEmpty) {
       kmSinceLastFill = await _tripService
-          .getDistanceSinceLastFuel(allEntries.first.timestamp);
+          .getDistanceSinceLastFuel(allEntries.first.timestamp, isEndRefill: true);
     }
 
     // Calculated mileage: km / litres.
@@ -88,11 +88,42 @@ class FuelService {
   }
 
   /// Get all fuel entries, most recent first.
-  Future<List<FuelEntry>> getAllEntries() => _db.getAllFuelEntries();
+  /// Get all fuel entries, most recent first, with dynamically calculated mileage.
+  Future<List<FuelEntry>> getAllEntries() async {
+    final entries = await _db.getAllFuelEntries();
+    if (entries.isEmpty) return [];
+
+    final result = <FuelEntry>[];
+    for (int i = 0; i < entries.length; i++) {
+      final entry = entries[i];
+      
+      double kmSinceLastFill = 0.0;
+      double mileage = 0.0;
+      double costKm = 0.0;
+      
+      if (i + 1 < entries.length) {
+        final prevEntry = entries[i + 1];
+        kmSinceLastFill = await _tripService.getDistanceSinceLastFuel(
+          prevEntry.timestamp,
+          endFuelDate: entry.timestamp,
+          isEndRefill: true,
+        );
+        mileage = entry.litresFilled > 0 ? kmSinceLastFill / entry.litresFilled : 0.0;
+        costKm = kmSinceLastFill > 0 ? (entry.amountPaid ?? 0.0) / kmSinceLastFill : 0.0;
+      }
+      
+      result.add(entry.copyWith(
+        kmSinceLastFill: kmSinceLastFill,
+        calculatedMileage: mileage,
+        costPerKm: costKm,
+      ));
+    }
+    return result;
+  }
 
   /// Rolling average mileage (last N fills).
   Future<double> getRollingAverageMileage({int window = 5}) async {
-    final entries = await _db.getAllFuelEntries();
+    final entries = await getAllEntries();
     if (entries.isEmpty) return 0.0;
     final recent = entries.take(window).toList();
     final validEntries =
@@ -105,7 +136,7 @@ class FuelService {
   /// Estimated fuel remaining (litres).
   /// Formula: litres from last fill − (distance since × 1/avg_mileage)
   Future<double> getEstimatedFuelRemaining() async {
-    final entries = await _db.getAllFuelEntries();
+    final entries = await getAllEntries();
     if (entries.isEmpty) return 0.0;
 
     final lastEntry = entries.first;
@@ -128,7 +159,7 @@ class FuelService {
 
   /// Total fuel spend this month (₹).
   Future<double> getMonthSpend() async {
-    final entries = await _db.getAllFuelEntries();
+    final entries = await getAllEntries();
     final start = DateTime(DateTime.now().year, DateTime.now().month);
     return entries
         .where((e) => e.timestamp.isAfter(start))
@@ -137,7 +168,7 @@ class FuelService {
 
   /// Average cost per km (configurable window).
   Future<double> getAverageCostPerKm({int lastNFills = 5}) async {
-    final entries = await _db.getAllFuelEntries();
+    final entries = await getAllEntries();
     final recent = entries.take(lastNFills).toList();
     final valid = recent.where((e) => e.costPerKm > 0).toList();
     if (valid.isEmpty) return 0.0;
@@ -146,7 +177,7 @@ class FuelService {
 
   /// Last petrol price (₹/L).
   Future<double> getLastPetrolPrice() async {
-    final entries = await _db.getAllFuelEntries();
+    final entries = await getAllEntries();
     if (entries.isEmpty) return 0.0;
     return entries.first.pricePerLitre;
   }

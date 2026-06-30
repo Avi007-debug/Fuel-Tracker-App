@@ -63,11 +63,45 @@ class TripService {
   }
 
   /// Total distance since last fuel entry (for mileage calculation).
-  Future<double> getDistanceSinceLastFuel(DateTime lastFuelDate) async {
+  ///
+  /// Adjusts the College Return trip (8.4 km) overlapping with refills:
+  /// - Starting refill day return trip: only counts 4.6 km (Pump -> Home portion)
+  /// - Ending refill day return trip: only counts 3.8 km (Metro -> Pump portion)
+  Future<double> getDistanceSinceLastFuel(
+    DateTime lastFuelDate, {
+    DateTime? endFuelDate,
+    bool isEndRefill = false,
+  }) async {
+    final endDate = endFuelDate ?? DateTime.now();
     final all = await _db.getAllTrips();
-    return all
-        .where((t) => t.timestamp.isAfter(lastFuelDate))
-        .fold<double>(0.0, (sum, t) => sum + t.distanceKm);
+    
+    double totalDistance = 0.0;
+    for (final t in all) {
+      if (t.routeType == RouteType.collegeReturn) {
+        if (_isSameDay(t.timestamp, lastFuelDate)) {
+          // Overlapping return trip at the start of the interval (refill day)
+          // Only the portion driven AFTER the refill (Pump -> Home = 4.6 km) belongs to this interval
+          totalDistance += 4.6;
+        } else if (isEndRefill && _isSameDay(t.timestamp, endDate)) {
+          // Overlapping return trip at the end of the interval (refill day)
+          // Only the portion driven BEFORE the refill (Metro -> Pump = 3.8 km) belongs to this interval
+          totalDistance += 3.8;
+        } else if (t.timestamp.isAfter(lastFuelDate) && t.timestamp.isBefore(endDate)) {
+          // A regular return trip in the middle of the interval (no refill on this day)
+          totalDistance += t.distanceKm;
+        }
+      } else {
+        // All other trips (going, short, custom) are counted fully if they fall within the interval
+        if (t.timestamp.isAfter(lastFuelDate) && t.timestamp.isBefore(endDate)) {
+          totalDistance += t.distanceKm;
+        }
+      }
+    }
+    return totalDistance;
+  }
+
+  bool _isSameDay(DateTime d1, DateTime d2) {
+    return d1.year == d2.year && d1.month == d2.month && d1.day == d2.day;
   }
 
   /// Lifetime total distance.
