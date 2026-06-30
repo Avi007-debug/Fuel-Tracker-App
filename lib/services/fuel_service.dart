@@ -125,11 +125,11 @@ class FuelService {
   /// Rolling average mileage (last N fills).
   Future<double> getRollingAverageMileage({int window = 5}) async {
     final entries = await getAllEntries();
-    if (entries.isEmpty) return 0.0;
+    if (entries.isEmpty) return 45.0; // Baseline fallback
     final recent = entries.take(window).toList();
     final validEntries =
         recent.where((e) => e.calculatedMileage > 0).toList();
-    if (validEntries.isEmpty) return 0.0;
+    if (validEntries.isEmpty) return 45.0; // Baseline fallback
     return validEntries.fold(0.0, (sum, e) => sum + e.calculatedMileage) /
         validEntries.length;
   }
