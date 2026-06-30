@@ -50,4 +50,33 @@ class FuelEstimator {
   }) {
     return estimatedRangeKm < threshold;
   }
+
+  /// Predict fuel remaining day-by-day for the next 7 days.
+  /// Returns a list of predicted fuel levels (in Litres).
+  static List<double> predict7DayForecast({
+    required double currentFuelL,
+    required double averageMileageKmPerL,
+    required Map<int, double> dayAverages,
+  }) {
+    final forecast = <double>[];
+    double tempFuel = currentFuelL;
+    final now = DateTime.now();
+
+    for (int i = 1; i <= 7; i++) {
+      final day = now.add(Duration(days: i));
+      final weekday = day.weekday;
+
+      // Expected distance for this day of week.
+      // If 0, use a fallback: 15.6 km on weekdays, 2.0 km on weekends
+      double expectedDistance = dayAverages[weekday] ?? 0.0;
+      if (expectedDistance <= 0.0) {
+        expectedDistance = (weekday == DateTime.saturday || weekday == DateTime.sunday) ? 2.0 : 15.6;
+      }
+
+      final fuelUsed = averageMileageKmPerL > 0 ? expectedDistance / averageMileageKmPerL : 0.0;
+      tempFuel = (tempFuel - fuelUsed).clamp(0.0, double.infinity);
+      forecast.add(tempFuel);
+    }
+    return forecast;
+  }
 }

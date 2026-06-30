@@ -12,13 +12,25 @@ class TripService {
 
   TripService(this._db);
 
+  /// Get custom distance for route, falling back to enum default.
+  Future<double> getRouteDistance(RouteType routeType) async {
+    if (routeType == RouteType.custom) return 0.0;
+    final settings = await _db.getSettings();
+    if (settings != null && settings.containsKey(routeType.key)) {
+      final val = settings[routeType.key];
+      if (val is num) return val.toDouble();
+    }
+    return routeType.defaultDistanceKm;
+  }
+
   /// Log a quick-action trip (fixed route).
   Future<Trip> logTrip(RouteType routeType, {String? notes}) async {
+    final distance = await getRouteDistance(routeType);
     final trip = Trip(
       id: _uuid.v4(),
       timestamp: DateTime.now(),
       routeType: routeType,
-      distanceKm: routeType.defaultDistanceKm,
+      distanceKm: distance,
       notes: notes,
     );
     await _db.addTrip(trip);

@@ -6,6 +6,8 @@ import 'package:fuel_tracker_app/providers/app_providers.dart';
 import 'package:fuel_tracker_app/utils/formatters.dart';
 import 'package:fuel_tracker_app/features/insights/widgets/charts.dart';
 import 'package:fuel_tracker_app/features/insights/widgets/service_status_panel.dart';
+import 'package:fuel_tracker_app/core/export/csv_exporter.dart';
+import 'package:fuel_tracker_app/core/export/pdf_exporter.dart';
 
 /// Screen 4 — 📊 Insights
 ///
@@ -51,10 +53,12 @@ class _InsightsScreenState extends ConsumerState<InsightsScreen> {
           CumulativeDistanceChart(),
           WeeklyPatternChart(),
           RouteDistributionChart(),
+          StackedMonthlyDistanceChart(),
         ];
       case 'Fuel':
         return const [
           MileageTrendChart(),
+          AiPredictionOverlayChart(),
           FuelEconomyDistributionChart(),
           FuelTankLevelGauge(),
           FuelConsumptionChart(),
@@ -65,13 +69,18 @@ class _InsightsScreenState extends ConsumerState<InsightsScreen> {
           MonthlySpendChart(),
           MonthlyExpenseForecastChart(),
           CostPerKmChart(),
+          ScatterPlotPriceVsCostChart(),
+          SankeyFuelFlowChart(),
           ExpenseBreakdownChart(),
           RefillHistoryTimelineChart(),
         ];
       case 'AI Diagnostics':
         return const [
           VehicleHealthScoreGauge(),
+          RadarHealthMetricsChart(),
           AiInsightsGrid(),
+          AchievementsGrid(),
+          AiTimelineFeed(),
         ];
       default:
         return [];
@@ -106,20 +115,75 @@ class _InsightsScreenState extends ConsumerState<InsightsScreen> {
                     const Spacer(),
                     // Export buttons
                     IconButton(
-                      onPressed: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                              content: Text('PDF export coming in v1.5')),
-                        );
+                      onPressed: () async {
+                        try {
+                          final profile = await ref.read(vehicleProfileProvider.future);
+                          final trips = await ref.read(allTripsProvider.future);
+                          final entries = await ref.read(allFuelEntriesProvider.future);
+                          final totalDistance = await ref.read(totalDistanceProvider.future);
+                          final totalSpent = entries.fold<double>(0.0, (s, e) => s + (e.amountPaid ?? 0.0));
+                          final averageMileage = await ref.read(averageMileageProvider.future);
+
+                          await PdfExporter.exportMonthlyReport(
+                            profile: profile,
+                            trips: trips,
+                            entries: entries,
+                            totalDistance: totalDistance,
+                            totalSpent: totalSpent,
+                            averageMileage: averageMileage,
+                          );
+                        } catch (e) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('Failed to export PDF: $e')),
+                          );
+                        }
                       },
                       icon: const Icon(Icons.picture_as_pdf_outlined),
                       tooltip: 'Export PDF',
                     ),
                     IconButton(
                       onPressed: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                              content: Text('CSV export coming in v1.5')),
+                        showModalBottomSheet(
+                          context: context,
+                          shape: const RoundedRectangleBorder(
+                            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+                          ),
+                          builder: (ctx) => Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              ListTile(
+                                leading: const Icon(Icons.directions_run_outlined),
+                                title: const Text('Export Trips to CSV'),
+                                onTap: () async {
+                                  Navigator.pop(ctx);
+                                  try {
+                                    final trips = await ref.read(allTripsProvider.future);
+                                    await CsvExporter.exportTrips(trips);
+                                  } catch (e) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(content: Text('Failed to export trips: $e')),
+                                    );
+                                  }
+                                },
+                              ),
+                              ListTile(
+                                leading: const Icon(Icons.local_gas_station_outlined),
+                                title: const Text('Export Refill Logs to CSV'),
+                                onTap: () async {
+                                  Navigator.pop(ctx);
+                                  try {
+                                    final entries = await ref.read(allFuelEntriesProvider.future);
+                                    await CsvExporter.exportFuel(entries);
+                                  } catch (e) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(content: Text('Failed to export refills: $e')),
+                                    );
+                                  }
+                                },
+                              ),
+                              const SizedBox(height: 12),
+                            ],
+                          ),
                         );
                       },
                       icon: const Icon(Icons.table_chart_outlined),

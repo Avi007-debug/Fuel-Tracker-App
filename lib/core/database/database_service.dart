@@ -156,6 +156,16 @@ class DatabaseService {
     await _writeList('service_records', list);
   }
 
+  // ─── Settings ─────────────────────────────────────────────────────
+
+  Future<Map<String, dynamic>?> getSettings() async {
+    return _readSingle('settings');
+  }
+
+  Future<void> saveSettings(Map<String, dynamic> settings) async {
+    await _writeSingle('settings', settings);
+  }
+
   // ─── Backup & Restore ─────────────────────────────────────────────
 
   /// Export everything as a single JSON map.
@@ -167,15 +177,59 @@ class DatabaseService {
           (await getAllFuelEntries()).map((e) => e.toJson()).toList(),
       'service_records':
           (await getAllServiceRecords()).map((e) => e.toJson()).toList(),
+      'settings': await getSettings(),
       'exported_at': DateTime.now().toIso8601String(),
     };
   }
 
   /// Wipe all data.
   Future<void> wipeAll() async {
-    for (final name in ['vehicle_profile', 'trips', 'fuel_entries', 'service_records']) {
+    for (final name in ['vehicle_profile', 'trips', 'fuel_entries', 'service_records', 'settings']) {
       final file = _file(name);
       if (file.existsSync()) await file.delete();
+    }
+  }
+
+  /// Restore database from an exported map.
+  Future<void> restoreAll(Map<String, dynamic> data) async {
+    // Save vehicle profile
+    if (data['vehicle_profile'] != null) {
+      await _writeSingle('vehicle_profile', data['vehicle_profile']);
+    } else {
+      final file = _file('vehicle_profile');
+      if (file.existsSync()) await file.delete();
+    }
+
+    // Save settings
+    if (data['settings'] != null) {
+      await _writeSingle('settings', data['settings']);
+    } else {
+      final file = _file('settings');
+      if (file.existsSync()) await file.delete();
+    }
+
+    // Save trips
+    if (data['trips'] != null) {
+      final list = (data['trips'] as List).cast<Map<String, dynamic>>();
+      await _writeList('trips', list);
+    } else {
+      await _writeList('trips', []);
+    }
+
+    // Save fuel entries
+    if (data['fuel_entries'] != null) {
+      final list = (data['fuel_entries'] as List).cast<Map<String, dynamic>>();
+      await _writeList('fuel_entries', list);
+    } else {
+      await _writeList('fuel_entries', []);
+    }
+
+    // Save service records
+    if (data['service_records'] != null) {
+      final list = (data['service_records'] as List).cast<Map<String, dynamic>>();
+      await _writeList('service_records', list);
+    } else {
+      await _writeList('service_records', []);
     }
   }
 }

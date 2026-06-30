@@ -3,6 +3,7 @@ import 'package:uuid/uuid.dart';
 import 'package:fuel_tracker_app/core/database/database_service.dart';
 import 'package:fuel_tracker_app/models/fuel_entry.dart';
 import 'package:fuel_tracker_app/services/trip_service.dart';
+import 'package:fuel_tracker_app/core/notifications/home_widget_sync.dart';
 
 /// Business logic for fuel entry, mileage calculation, and fuel estimation.
 class FuelService {
@@ -154,7 +155,15 @@ class FuelService {
   Future<double> getEstimatedRange() async {
     final fuel = await getEstimatedFuelRemaining();
     final mileage = await getRollingAverageMileage();
-    return fuel * mileage;
+    final range = fuel * mileage;
+    
+    // Sync to Home Widget
+    await HomeWidgetSync.syncData(
+      estimatedRangeKm: range,
+      fuelRemainingL: fuel,
+    );
+
+    return range;
   }
 
   /// Total fuel spend this month (₹).

@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:intl/intl.dart';
+import 'package:fuel_tracker_app/services/achievement_service.dart';
+import 'package:fuel_tracker_app/services/milestone_service.dart';
 
 import 'package:fuel_tracker_app/app/theme.dart';
 import 'package:fuel_tracker_app/providers/app_providers.dart';
@@ -1619,34 +1622,189 @@ class _InsightBlock extends StatelessWidget {
     required this.color,
   });
 
+  void _showInsightDetails(BuildContext context) {
+    String header = '';
+    String observation = '';
+    List<String> causes = [];
+    List<String> recommendations = [];
+    
+    if (title == 'Refill Due') {
+      header = 'Refill Prediction Analysis';
+      observation = 'Your fuel tank is estimated to hit reserve level based on your typical daily commute patterns.';
+      causes = [
+        'Riding pattern predicts standard college commute trips this week.',
+        'Current remaining fuel level is low.',
+      ];
+      recommendations = [
+        'Refuel at BP Makali on your next return commute trip.',
+        'Avoid letting the fuel drop below reserve level to maintain fuel pump health.',
+      ];
+    } else if (title == 'Avg Mileage') {
+      header = 'Average Mileage Analysis';
+      observation = 'Your current rolling average mileage is calculated over the last 5 fuel entries.';
+      causes = [
+        'Commuting style, route consistency, and riding speeds.',
+        'Vehicle health and service compliance status.',
+      ];
+      recommendations = [
+        'Maintain a steady speed of 40-50 km/h on highway stretches.',
+        'Ensure tyre pressure is maintained at recommended levels (22/36 PSI).',
+        'Clean/change the air filter if it is clogged.',
+      ];
+    } else if (title == 'Health Index') {
+      header = 'Vehicle Health Diagnostics';
+      observation = 'Health score is calculated based on mileage stability (30%), service compliance (40%), and fuel efficiency (30%).';
+      causes = [
+        'Maintenance interval adherence.',
+        'Mileage consistency across refill cycles.',
+      ];
+      recommendations = [
+        'Clean the spark plug and adjust chain tension during general service.',
+        'Change engine oil every 3,000 km for engine longevity.',
+        'Log services regularly in the app to maintain an accurate health index.',
+      ];
+    } else if (title == 'Mileage Drop') {
+      header = 'Mileage Drop Analysis';
+      observation = value == 'Detected!' 
+          ? 'Alert: Your latest fill shows a mileage drop of > 10% compared to your rolling average!'
+          : 'Your mileage stability is healthy and within normal boundaries.';
+      causes = value == 'Detected!' ? [
+        'Under-inflated tyres causing higher road friction.',
+        'Dirty air filter or poor petrol quality.',
+        'High throttle variation or heavy payloads.',
+      ] : [
+        'Consistent riding speeds and throttle usage.',
+        'Tyres and air filter are in good condition.',
+      ];
+      recommendations = [
+        'Check tyre pressure (front 22 psi, rear 36 psi) immediately.',
+        'Check and clean the air filter if it hasn\'t been serviced recently.',
+        'Ensure you refill with quality fuel from trusted pumps like BP Makali.',
+      ];
+    }
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) => Padding(
+        padding: EdgeInsets.fromLTRB(24, 24, 24, MediaQuery.of(ctx).viewInsets.bottom + 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(icon, color: color, size: 28),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    header,
+                    style: Theme.of(ctx).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ],
+            ),
+            const Divider(height: 32),
+            Text(
+              'Observation',
+              style: Theme.of(ctx).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold, color: color),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              observation,
+              style: Theme.of(ctx).textTheme.bodyMedium,
+            ),
+            const SizedBox(height: 20),
+            Text(
+              'Potential Causes',
+              style: Theme.of(ctx).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            ...causes.map((c) => Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 4),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('• ', style: TextStyle(color: color, fontWeight: FontWeight.bold)),
+                      Expanded(child: Text(c, style: Theme.of(ctx).textTheme.bodyMedium)),
+                    ],
+                  ),
+                )),
+            const SizedBox(height: 20),
+            Text(
+              'Recommendations',
+              style: Theme.of(ctx).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold, color: AppTheme.accentGreen),
+            ),
+            const SizedBox(height: 8),
+            ...recommendations.map((r) => Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 4),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('✓ ', style: TextStyle(color: AppTheme.accentGreen, fontWeight: FontWeight.bold)),
+                      Expanded(child: Text(r, style: Theme.of(ctx).textTheme.bodyMedium)),
+                    ],
+                  ),
+                )),
+            const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              height: 48,
+              child: FilledButton(
+                onPressed: () => Navigator.pop(ctx),
+                style: FilledButton.styleFrom(
+                  backgroundColor: color,
+                ),
+                child: const Text('Dismiss'),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: color.withAlpha(10),
+    return Material(
+      color: color.withAlpha(10),
+      borderRadius: BorderRadius.circular(12),
+      child: InkWell(
+        onTap: () => _showInsightDetails(context),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withAlpha(30)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Icon(icon, color: color, size: 20),
-          Column(
+        highlightColor: color.withAlpha(20),
+        splashColor: color.withAlpha(30),
+        child: Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: color.withAlpha(30)),
+          ),
+          child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                value,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold, color: color),
-              ),
-              Text(
-                title,
-                style: Theme.of(context).textTheme.labelSmall?.copyWith(fontSize: 9),
+              Icon(icon, color: color, size: 20),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    value,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold, color: color),
+                  ),
+                  Text(
+                    title,
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(fontSize: 9),
+                  ),
+                ],
               ),
             ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -1770,6 +1928,845 @@ class MonthlyExpenseForecastChart extends ConsumerWidget {
       },
       loading: () => const _LoadingChart(),
       error: (_, __) => const _ErrorChart(),
+    );
+  }
+}
+
+/// Achievements Badge Grid.
+class AchievementsGrid extends ConsumerWidget {
+  const AchievementsGrid({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final achievementsAsync = ref.watch(achievementsProvider);
+
+    return achievementsAsync.when(
+      data: (achievements) {
+        return _ChartContainer(
+          title: 'Achievements & Badges',
+          subtitle: 'Milestone badges unlocked by your riding',
+          color: AppTheme.accentGreen,
+          child: Column(
+            children: [
+              GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  mainAxisSpacing: 10,
+                  crossAxisSpacing: 10,
+                  childAspectRatio: 1.3,
+                ),
+                itemCount: achievements.length,
+                itemBuilder: (context, index) {
+                  final ach = achievements[index];
+                  return Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: ach.isUnlocked
+                          ? AppTheme.accentGreen.withAlpha(10)
+                          : Theme.of(context).colorScheme.surfaceContainerHighest.withAlpha(50),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: ach.isUnlocked
+                            ? AppTheme.accentGreen.withAlpha(35)
+                            : Theme.of(context).colorScheme.outline.withAlpha(50),
+                        width: ach.isUnlocked ? 1.5 : 1.0,
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              ach.icon,
+                              style: const TextStyle(fontSize: 24),
+                            ),
+                            if (ach.isUnlocked)
+                              const Icon(
+                                Icons.check_circle,
+                                color: AppTheme.accentGreen,
+                                size: 16,
+                              )
+                            else
+                              Text(
+                                '${(ach.progress * 100).toInt()}%',
+                                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                      color: AppTheme.textMuted,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                              ),
+                          ],
+                        ),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              ach.title,
+                              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    color: ach.isUnlocked ? AppTheme.accentGreen : Theme.of(context).textTheme.bodyLarge?.color,
+                                  ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              ach.description,
+                              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                    fontSize: 8,
+                                    color: AppTheme.textMuted,
+                                  ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ],
+          ),
+        );
+      },
+      loading: () => const _LoadingChart(),
+      error: (e, s) => _ErrorChart(message: 'Error loading achievements: $e'),
+    );
+  }
+}
+
+/// Google Photos-style AI Timeline of Milestones.
+class AiTimelineFeed extends ConsumerWidget {
+  const AiTimelineFeed({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final milestonesAsync = ref.watch(milestonesProvider);
+
+    return milestonesAsync.when(
+      data: (milestones) {
+        if (milestones.isEmpty) {
+          return const _EmptyChart(message: 'Log rides or fuel refills to start your timeline!');
+        }
+
+        return _ChartContainer(
+          title: 'AI Riding Milestones',
+          subtitle: 'History feed of accomplishments & summaries',
+          color: AppTheme.accentBlue,
+          child: ListView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: milestones.length,
+            itemBuilder: (context, index) {
+              final ms = milestones[index];
+              final formattedDate = "${ms.date.day}/${ms.date.month}/${ms.date.year}";
+
+              return IntrinsicHeight(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Column(
+                      children: [
+                        Container(
+                          width: 24,
+                          height: 24,
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).colorScheme.primaryContainer,
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: Theme.of(context).colorScheme.primary,
+                              width: 2,
+                            ),
+                          ),
+                          alignment: Alignment.center,
+                          child: Text(
+                            ms.icon,
+                            style: const TextStyle(fontSize: 12),
+                          ),
+                        ),
+                        if (index < milestones.length - 1)
+                          Expanded(
+                            child: Container(
+                              width: 2,
+                              color: Theme.of(context).colorScheme.outline.withAlpha(100),
+                            ),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.only(bottom: 16),
+                        child: Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).colorScheme.surfaceContainerLowest,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: Theme.of(context).colorScheme.outline.withAlpha(55),
+                            ),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    ms.title,
+                                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                  ),
+                                  Text(
+                                    formattedDate,
+                                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                          color: AppTheme.textMuted,
+                                          fontSize: 9,
+                                        ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                ms.subtitle,
+                                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                      color: Theme.of(context).textTheme.bodyMedium?.color,
+                                    ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        );
+      },
+      loading: () => const _LoadingChart(),
+      error: (e, s) => _ErrorChart(message: 'Error loading milestones: $e'),
+    );
+  }
+}
+
+/// Scatter Plot Chart: Petrol Price vs Cost per km.
+class ScatterPlotPriceVsCostChart extends ConsumerWidget {
+  const ScatterPlotPriceVsCostChart({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final entriesAsync = ref.watch(allFuelEntriesProvider);
+
+    return entriesAsync.when(
+      data: (entries) {
+        final valid = entries.where((e) => e.costPerKm > 0 && e.pricePerLitre > 0).toList();
+        if (valid.isEmpty) {
+          return const _EmptyChart(message: 'Log refills with mileage to see scatter plot');
+        }
+
+        final spots = valid.map((e) => ScatterSpot(e.costPerKm, e.pricePerLitre)).toList();
+
+        double minX = valid.map((e) => e.costPerKm).reduce(math.min);
+        double maxX = valid.map((e) => e.costPerKm).reduce(math.max);
+        double minY = valid.map((e) => e.pricePerLitre).reduce(math.min);
+        double maxY = valid.map((e) => e.pricePerLitre).reduce(math.max);
+
+        // Add padding
+        minX = (minX - 0.5).clamp(0.0, double.infinity);
+        maxX = maxX + 0.5;
+        minY = (minY - 5.0).clamp(0.0, double.infinity);
+        maxY = maxY + 5.0;
+
+        return _ChartContainer(
+          title: 'Price vs Cost per km',
+          subtitle: 'Petrol Price (₹/L) vs Cost/km (₹) scatter analysis',
+          color: AppTheme.accentOrange,
+          child: SizedBox(
+            height: 180,
+            child: ScatterChart(
+              ScatterChartData(
+                scatterSpots: spots,
+                minX: minX,
+                maxX: maxX,
+                minY: minY,
+                maxY: maxY,
+                gridData: FlGridData(
+                  show: true,
+                  drawHorizontalLine: true,
+                  drawVerticalLine: true,
+                  getDrawingHorizontalLine: (val) => FlLine(color: AppTheme.textMuted.withAlpha(15)),
+                  getDrawingVerticalLine: (val) => FlLine(color: AppTheme.textMuted.withAlpha(15)),
+                ),
+                titlesData: FlTitlesData(
+                  topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  leftTitles: AxisTitles(
+                    sideTitles: SideTitles(
+                      showTitles: true,
+                      reservedSize: 45,
+                      getTitlesWidget: (value, meta) => Text(
+                        '₹${value.toStringAsFixed(0)}',
+                        style: Theme.of(context).textTheme.labelSmall,
+                      ),
+                    ),
+                  ),
+                  bottomTitles: AxisTitles(
+                    sideTitles: SideTitles(
+                      showTitles: true,
+                      reservedSize: 22,
+                      getTitlesWidget: (value, meta) => Text(
+                        '₹${value.toStringAsFixed(1)}',
+                        style: Theme.of(context).textTheme.labelSmall,
+                      ),
+                    ),
+                  ),
+                ),
+                borderData: FlBorderData(show: false),
+                scatterTouchData: ScatterTouchData(
+                  enabled: true,
+                  handleBuiltInTouches: true,
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+      loading: () => const _LoadingChart(),
+      error: (e, _) => _ErrorChart(message: 'Error loading scatter chart: $e'),
+    );
+  }
+}
+
+/// Radar Chart: Vehicle Health Metrics (Efficiency, Maintenance, Consistency).
+class RadarHealthMetricsChart extends ConsumerWidget {
+  const RadarHealthMetricsChart({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final entriesAsync = ref.watch(allFuelEntriesProvider);
+    final profileAsync = ref.watch(vehicleProfileProvider);
+    final tripsAsync = ref.watch(allTripsProvider);
+
+    return profileAsync.when(
+      data: (profile) {
+        if (profile == null) return const SizedBox.shrink();
+
+        return entriesAsync.when(
+          data: (entries) {
+            return tripsAsync.when(
+              data: (trips) {
+                // 1. Efficiency: rolling avg mileage / 45.0 (Activa target)
+                final avgMileage = MileageEngine.rollingAverage(entries);
+                final efficiencyScore = (avgMileage / 45.0).clamp(0.0, 1.0);
+
+                // 2. Maintenance: distance since last service / interval
+                final totalDistance = trips.fold<double>(0.0, (s, t) => s + t.distanceKm);
+                final odometer = (profile.initialOdometer ?? 0.0) + totalDistance;
+                final distSinceService = (odometer - profile.lastServiceKm).clamp(0.0, double.infinity);
+                final maintenanceScore = (1.0 - (distSinceService / profile.serviceIntervalKm)).clamp(0.0, 1.0);
+
+                // 3. Consistency: mileage confidence score
+                final consistencyScore = MileageEngine.calculateMileageConfidence(entries);
+
+                return _ChartContainer(
+                  title: 'Vehicle Performance Radar',
+                  subtitle: 'Multi-axis health & consistency metrics',
+                  color: AppTheme.accentPurple,
+                  child: SizedBox(
+                    height: 200,
+                    child: RadarChart(
+                      RadarChartData(
+                        dataSets: [
+                          RadarDataSet(
+                            fillColor: AppTheme.accentPurple.withAlpha(40),
+                            borderColor: AppTheme.accentPurple,
+                            entryRadius: 3,
+                            borderWidth: 2,
+                            dataEntries: [
+                              RadarEntry(value: efficiencyScore * 100),
+                              RadarEntry(value: maintenanceScore * 100),
+                              RadarEntry(value: consistencyScore * 100),
+                            ],
+                          ),
+                        ],
+                        radarShape: RadarShape.polygon,
+                        getTitle: (index, angle) {
+                          switch (index) {
+                            case 0:
+                              return RadarChartTitle(text: 'Efficiency (${(efficiencyScore * 100).round()}%)', angle: angle);
+                            case 1:
+                              return RadarChartTitle(text: 'Maintenance (${(maintenanceScore * 100).round()}%)', angle: angle);
+                            case 2:
+                              return RadarChartTitle(text: 'Consistency (${(consistencyScore * 100).round()}%)', angle: angle);
+                            default:
+                              return const RadarChartTitle(text: '');
+                          }
+                        },
+                        tickCount: 4,
+                        ticksTextStyle: Theme.of(context).textTheme.labelSmall?.copyWith(fontSize: 8, color: AppTheme.textMuted),
+                        gridBorderData: BorderSide(color: Theme.of(context).colorScheme.outline.withAlpha(80)),
+                        tickBorderData: BorderSide(color: Theme.of(context).colorScheme.outline.withAlpha(40)),
+                      ),
+                    ),
+                  ),
+                );
+              },
+              loading: () => const _LoadingChart(),
+              error: (e, _) => _ErrorChart(message: 'Error: $e'),
+            );
+          },
+          loading: () => const _LoadingChart(),
+          error: (e, _) => _ErrorChart(message: 'Error: $e'),
+        );
+      },
+      loading: () => const _LoadingChart(),
+      error: (e, _) => _ErrorChart(message: 'Error: $e'),
+    );
+  }
+}
+
+/// Sankey Diagram Custom Flow Painter
+class SankeyPainter extends CustomPainter {
+  final double totalSpent;
+  final Map<String, double> routeSpents;
+  final BuildContext context;
+
+  SankeyPainter({
+    required this.totalSpent,
+    required this.routeSpents,
+    required this.context,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (totalSpent <= 0) return;
+
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textStyle = TextStyle(
+      color: isDark ? Colors.white : Colors.black,
+      fontSize: 10,
+      fontWeight: FontWeight.bold,
+    );
+    final valueStyle = TextStyle(
+      color: AppTheme.textMuted,
+      fontSize: 9,
+    );
+
+    final leftNodeWidth = 65.0;
+    final rightNodeWidth = 65.0;
+    final nodeHeight = 35.0;
+
+    // Draw Left Node (Total Spend)
+    final leftX = 10.0;
+    final leftY = size.height / 2 - nodeHeight / 2;
+    final leftRect = RRect.fromRectAndRadius(
+      Rect.fromLTWH(leftX, leftY, leftNodeWidth, nodeHeight),
+      const Radius.circular(6),
+    );
+    final leftPaint = Paint()..color = AppTheme.accentOrange.withAlpha(200);
+    canvas.drawRRect(leftRect, leftPaint);
+
+    _drawText(canvas, 'Total Spent', Offset(leftX + 6, leftY + 6), textStyle.copyWith(fontSize: 8.5));
+    _drawText(canvas, '₹${totalSpent.toStringAsFixed(0)}', Offset(leftX + 6, leftY + 18), valueStyle);
+
+    // Draw Right Nodes and Flows
+    final rightX = size.width - rightNodeWidth - 10.0;
+    final rightItems = routeSpents.entries.where((e) => e.value > 0).toList();
+    if (rightItems.isEmpty) return;
+
+    final totalRightSpace = size.height;
+    final gap = 12.0;
+    final totalHeightForNodes = (rightItems.length * nodeHeight) + ((rightItems.length - 1) * gap);
+    double currentRightY = (totalRightSpace - totalHeightForNodes) / 2;
+
+    double leftFlowAccumulator = 0.0;
+
+    for (int i = 0; i < rightItems.length; i++) {
+      final item = rightItems[i];
+      final itemSpent = item.value;
+      final fraction = itemSpent / totalSpent;
+
+      final rRect = RRect.fromRectAndRadius(
+        Rect.fromLTWH(rightX, currentRightY, rightNodeWidth, nodeHeight),
+        const Radius.circular(6),
+      );
+      final rPaint = Paint()..color = AppTheme.accentBlue.withAlpha(200);
+      canvas.drawRRect(rRect, rPaint);
+
+      _drawText(canvas, item.key, Offset(rightX + 4, currentRightY + 6), textStyle.copyWith(fontSize: 8.0));
+      _drawText(canvas, '₹${itemSpent.toStringAsFixed(0)}', Offset(rightX + 4, currentRightY + 18), valueStyle);
+
+      final flowThickness = nodeHeight * fraction;
+      final flowLeftY = leftY + leftFlowAccumulator + (flowThickness / 2);
+      final flowRightY = currentRightY + (nodeHeight / 2);
+
+      final path = Path();
+      path.moveTo(leftX + leftNodeWidth, flowLeftY - flowThickness / 2);
+
+      final controlX1 = (leftX + leftNodeWidth) + (rightX - (leftX + leftNodeWidth)) / 2;
+      final controlX2 = controlX1;
+
+      path.cubicTo(
+        controlX1, flowLeftY - flowThickness / 2,
+        controlX2, flowRightY - flowThickness / 2,
+        rightX, flowRightY - flowThickness / 2,
+      );
+      path.lineTo(rightX, flowRightY + flowThickness / 2);
+      path.cubicTo(
+        controlX2, flowRightY + flowThickness / 2,
+        controlX1, flowLeftY + flowThickness / 2,
+        leftX + leftNodeWidth, flowLeftY + flowThickness / 2,
+      );
+      path.close();
+
+      final flowPaint = Paint()
+        ..color = AppTheme.accentBlue.withAlpha((80 * fraction + 30).round())
+        ..style = PaintingStyle.fill;
+      canvas.drawPath(path, flowPaint);
+
+      leftFlowAccumulator += flowThickness;
+      currentRightY += nodeHeight + gap;
+    }
+  }
+
+  void _drawText(Canvas canvas, String text, Offset offset, TextStyle style) {
+    final textPainter = TextPainter(
+      text: TextSpan(text: text, style: style),
+      textDirection: TextDirection.ltr,
+    );
+    textPainter.layout();
+    textPainter.paint(canvas, offset);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
+}
+
+/// Sankey Diagram: Fuel -> Route -> Cost
+class SankeyFuelFlowChart extends ConsumerWidget {
+  const SankeyFuelFlowChart({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final tripsAsync = ref.watch(allTripsProvider);
+    final entriesAsync = ref.watch(allFuelEntriesProvider);
+
+    return entriesAsync.when(
+      data: (entries) {
+        return tripsAsync.when(
+          data: (trips) {
+            final totalSpent = entries.fold<double>(0.0, (s, e) => s + (e.amountPaid ?? 0.0));
+
+            final routeDists = <String, double>{};
+            for (final t in trips) {
+              final label = t.routeType.label;
+              routeDists[label] = (routeDists[label] ?? 0.0) + t.distanceKm;
+            }
+
+            final totalDist = routeDists.values.fold<double>(0.0, (s, d) => s + d);
+
+            final routeSpents = <String, double>{};
+            if (totalDist > 0) {
+              routeDists.forEach((key, dist) {
+                routeSpents[key] = (dist / totalDist) * totalSpent;
+              });
+            }
+
+            return _ChartContainer(
+              title: 'Fuel Flow Sankey',
+              subtitle: 'Apportioning total fuel expense by route distances',
+              color: AppTheme.accentBlue,
+              child: SizedBox(
+                height: 180,
+                width: double.infinity,
+                child: CustomPaint(
+                  painter: SankeyPainter(
+                    totalSpent: totalSpent,
+                    routeSpents: routeSpents,
+                    context: context,
+                  ),
+                ),
+              ),
+            );
+          },
+          loading: () => const _LoadingChart(),
+          error: (e, _) => _ErrorChart(message: 'Error: $e'),
+        );
+      },
+      loading: () => const _LoadingChart(),
+      error: (e, _) => _ErrorChart(message: 'Error: $e'),
+    );
+  }
+}
+
+/// Stacked Bar Chart: Stacked monthly distance comparison split by RouteType.
+class StackedMonthlyDistanceChart extends ConsumerWidget {
+  const StackedMonthlyDistanceChart({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final tripsAsync = ref.watch(allTripsProvider);
+
+    return tripsAsync.when(
+      data: (trips) {
+        if (trips.isEmpty) {
+          return const _EmptyChart(message: 'Log rides to see stacked comparison');
+        }
+
+        final monthlyData = <String, Map<String, double>>{};
+        for (final t in trips) {
+          final key = DateFormat('yyyy-MM').format(t.timestamp);
+          final route = t.routeType.label;
+          final mData = monthlyData.putIfAbsent(key, () => {});
+          mData[route] = (mData[route] ?? 0.0) + t.distanceKm;
+        }
+
+        final sortedMonths = monthlyData.keys.toList()..sort();
+        final recentMonths = sortedMonths.skip(math.max(0, sortedMonths.length - 6)).toList();
+
+        final routeColors = {
+          'College Going': AppTheme.accentGreen,
+          'Returned Home': AppTheme.accentBlue,
+          'Nearby Town': AppTheme.accentPurple,
+          'Short Ride': AppTheme.accentOrange,
+          'Custom Ride': AppTheme.textMuted,
+        };
+
+        final barGroups = <BarChartGroupData>[];
+        for (int i = 0; i < recentMonths.length; i++) {
+          final mKey = recentMonths[i];
+          final routeDists = monthlyData[mKey] ?? {};
+
+          double currentY = 0.0;
+          final stackItems = <BarChartRodStackItem>[];
+
+          routeDists.forEach((route, dist) {
+            if (dist > 0) {
+              final color = routeColors[route] ?? AppTheme.textMuted.withAlpha(100);
+              stackItems.add(BarChartRodStackItem(currentY, currentY + dist, color));
+              currentY += dist;
+            }
+          });
+
+          barGroups.add(
+            BarChartGroupData(
+              x: i,
+              barRods: [
+                BarChartRodData(
+                  toY: currentY,
+                  width: 18,
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
+                  rodStackItems: stackItems,
+                  color: Colors.transparent,
+                ),
+              ],
+            ),
+          );
+        }
+
+        return _ChartContainer(
+          title: 'Monthly Distance Breakdown',
+          subtitle: 'Cumulative riding split by route type (last 6 months)',
+          color: AppTheme.accentGreen,
+          child: Column(
+            children: [
+              SizedBox(
+                height: 180,
+                child: BarChart(
+                  BarChartData(
+                    alignment: BarChartAlignment.spaceAround,
+                    maxY: barGroups.isNotEmpty
+                        ? barGroups.map((g) => g.barRods[0].toY).reduce(math.max) * 1.15
+                        : 10.0,
+                    gridData: FlGridData(
+                      show: true,
+                      drawVerticalLine: false,
+                      getDrawingHorizontalLine: (val) => FlLine(color: AppTheme.textMuted.withAlpha(15)),
+                    ),
+                    titlesData: FlTitlesData(
+                      topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                      rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                      leftTitles: AxisTitles(
+                        sideTitles: SideTitles(
+                          showTitles: true,
+                          reservedSize: 40,
+                          getTitlesWidget: (value, meta) => Text(
+                            '${value.toInt()} km',
+                            style: Theme.of(context).textTheme.labelSmall,
+                          ),
+                        ),
+                      ),
+                      bottomTitles: AxisTitles(
+                        sideTitles: SideTitles(
+                          showTitles: true,
+                          getTitlesWidget: (value, meta) {
+                            final idx = value.toInt();
+                            if (idx < 0 || idx >= recentMonths.length) return const Text('');
+                            final parts = recentMonths[idx].split('-');
+                            final date = DateTime(int.parse(parts[0]), int.parse(parts[1]));
+                            return Padding(
+                              padding: const EdgeInsets.only(top: 6),
+                              child: Text(
+                                DateFormat('MMM').format(date),
+                                style: Theme.of(context).textTheme.labelSmall?.copyWith(fontWeight: FontWeight.bold),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+                    borderData: FlBorderData(show: false),
+                    barGroups: barGroups,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 8,
+                runSpacing: 4,
+                alignment: WrapAlignment.center,
+                children: routeColors.entries.map((entry) {
+                  return Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(width: 8, height: 8, color: entry.value),
+                      const SizedBox(width: 4),
+                      Text(entry.key, style: Theme.of(context).textTheme.labelSmall?.copyWith(fontSize: 8.5)),
+                    ],
+                  );
+                }).toList(),
+              ),
+            ],
+          ),
+        );
+      },
+      loading: () => const _LoadingChart(),
+      error: (e, _) => _ErrorChart(message: 'Error: $e'),
+    );
+  }
+}
+
+/// AI Prediction Overlay: Actual Mileage vs Smooth Rolling Predicted Mileage.
+class AiPredictionOverlayChart extends ConsumerWidget {
+  const AiPredictionOverlayChart({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final entriesAsync = ref.watch(allFuelEntriesProvider);
+
+    return entriesAsync.when(
+      data: (entries) {
+        final valid = entries.where((e) => e.calculatedMileage > 0).toList().reversed.toList();
+        if (valid.length < 2) {
+          return const _EmptyChart(message: 'Need 2+ fills to compare actual vs predicted mileage');
+        }
+
+        final actualSpots = <FlSpot>[];
+        final predictedSpots = <FlSpot>[];
+
+        for (int i = 0; i < valid.length; i++) {
+          final idxDouble = i.toDouble();
+          actualSpots.add(FlSpot(idxDouble, valid[i].calculatedMileage));
+
+          final rolling = MileageEngine.rollingAverage(valid.take(i + 1).toList().reversed.toList());
+          predictedSpots.add(FlSpot(idxDouble, rolling));
+        }
+
+        final allY = [...actualSpots, ...predictedSpots].map((s) => s.y).toList();
+        final minY = allY.reduce(math.min) * 0.95;
+        final maxY = allY.reduce(math.max) * 1.05;
+
+        return _ChartContainer(
+          title: 'Actual vs AI Predicted Mileage',
+          subtitle: 'Actual per-refill mileage vs rolling smooth mileage overlay',
+          color: AppTheme.accentOrange,
+          child: Column(
+            children: [
+              SizedBox(
+                height: 180,
+                child: LineChart(
+                  LineChartData(
+                    minY: minY,
+                    maxY: maxY,
+                    gridData: FlGridData(
+                      show: true,
+                      drawVerticalLine: false,
+                      getDrawingHorizontalLine: (val) => FlLine(color: AppTheme.textMuted.withAlpha(15)),
+                    ),
+                    titlesData: FlTitlesData(
+                      topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                      rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                      leftTitles: AxisTitles(
+                        sideTitles: SideTitles(
+                          showTitles: true,
+                          reservedSize: 40,
+                          getTitlesWidget: (value, meta) => Text(
+                            '${value.toStringAsFixed(1)}',
+                            style: Theme.of(context).textTheme.labelSmall,
+                          ),
+                        ),
+                      ),
+                      bottomTitles: AxisTitles(
+                        sideTitles: SideTitles(
+                          showTitles: true,
+                          getTitlesWidget: (value, meta) {
+                            final idx = value.toInt();
+                            if (idx < 0 || idx >= valid.length) return const Text('');
+                            return Text('Fill ${idx + 1}', style: Theme.of(context).textTheme.labelSmall);
+                          },
+                        ),
+                      ),
+                    ),
+                    borderData: FlBorderData(show: false),
+                    lineBarsData: [
+                      LineChartBarData(
+                        spots: actualSpots,
+                        isCurved: true,
+                        color: AppTheme.accentOrange.withAlpha(130),
+                        barWidth: 1.5,
+                        dashArray: [4, 4],
+                        dotData: const FlDotData(show: true),
+                      ),
+                      LineChartBarData(
+                        spots: predictedSpots,
+                        isCurved: true,
+                        color: AppTheme.accentGreen,
+                        barWidth: 3.0,
+                        dotData: const FlDotData(show: false),
+                        belowBarData: BarAreaData(
+                          show: true,
+                          color: AppTheme.accentGreen.withAlpha(15),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(width: 10, height: 2, color: AppTheme.accentGreen),
+                  const SizedBox(width: 4),
+                  Text('Rolling Target Trend', style: Theme.of(context).textTheme.labelSmall),
+                  const SizedBox(width: 16),
+                  Container(width: 10, height: 2, color: AppTheme.accentOrange.withAlpha(130)),
+                  const SizedBox(width: 4),
+                  Text('Actual Refill Mileage', style: Theme.of(context).textTheme.labelSmall),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
+      loading: () => const _LoadingChart(),
+      error: (e, _) => _ErrorChart(message: 'Error: $e'),
     );
   }
 }

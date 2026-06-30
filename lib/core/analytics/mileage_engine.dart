@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'package:fuel_tracker_app/models/fuel_entry.dart';
 import 'package:fuel_tracker_app/core/constants/app_constants.dart';
 
@@ -52,6 +53,41 @@ class MileageEngine {
         .toList()
         .reversed
         .toList();
+  }
+
+  /// Calculate mileage prediction confidence based on number of refills and consistency.
+  /// Returns a score between 0.0 and 1.0.
+  static double calculateMileageConfidence(List<FuelEntry> entries) {
+    final valid = entries.where((e) => e.calculatedMileage > 0).toList();
+    if (valid.isEmpty) return 0.0;
+
+    // Factor 1: Data density (number of refills)
+    // More refills = more reliable average. 5 refills is our target.
+    final countFactor = (valid.length / 5).clamp(0.0, 1.0);
+
+    if (valid.length < 2) {
+      return countFactor * 0.5; // low confidence with only 1 entry
+    }
+
+    // Factor 2: Consistency (Coefficient of Variation of the last 5 refills)
+    final recent = valid.take(5).toList();
+    final mean = recent.fold(0.0, (s, e) => s + e.calculatedMileage) / recent.length;
+    if (mean <= 0) return 0.0;
+
+    double varianceSum = 0.0;
+    for (final e in recent) {
+      final diff = e.calculatedMileage - mean;
+      varianceSum += diff * diff;
+    }
+    final variance = varianceSum / recent.length;
+    final stdDev = math.sqrt(variance);
+    final cv = stdDev / mean;
+
+    // CV < 0.05 is highly consistent (1.0), CV > 0.20 is irregular/low consistency (0.5)
+    // Map CV to a factor between 0.5 and 1.0
+    final consistencyFactor = (1.0 - (cv * 3.0)).clamp(0.5, 1.0);
+
+    return countFactor * consistencyFactor;
   }
 }
 

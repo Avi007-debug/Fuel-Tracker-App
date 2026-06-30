@@ -36,6 +36,11 @@ dependencies:
 
   # Export
   share_plus: ^10.1.4
+  pdf: ^3.11.1
+  csv: ^6.0.0
+
+  # Home Widget
+  home_widget: ^0.6.0
 
   # Media
   image_picker: ^1.1.2

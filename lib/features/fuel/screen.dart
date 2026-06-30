@@ -88,6 +88,11 @@ class FuelScreen extends ConsumerWidget {
               ),
             ),
 
+            // ── Predictive Fuel Timeline ────────────────────────
+            const SliverToBoxAdapter(
+              child: _PredictiveFuelTimeline(),
+            ),
+
             // ── Navigate to BP ──────────────────────────────────
             SliverToBoxAdapter(
               child: Padding(
@@ -453,6 +458,127 @@ class _FuelTile extends StatelessWidget {
             ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _PredictiveFuelTimeline extends ConsumerWidget {
+  const _PredictiveFuelTimeline();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final forecastAsync = ref.watch(predictiveFuelForecastProvider);
+
+    return forecastAsync.when(
+      data: (forecast) {
+        if (forecast.isEmpty) return const SizedBox.shrink();
+
+        final now = DateTime.now();
+        final weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+        final tankCapacity = AppConstants.defaultTankCapacityL;
+
+        return Container(
+          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Theme.of(context).cardTheme.color,
+            borderRadius: BorderRadius.circular(AppTheme.radiusLg),
+            border: Border.all(color: Theme.of(context).colorScheme.outline),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    '7-Day Fuel Forecast',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                  ),
+                  const Icon(Icons.show_chart, color: AppTheme.accentGreen, size: 20),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Estimated tank remaining day-by-day based on patterns',
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+              const SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: List.generate(7, (i) {
+                  final fuel = forecast[i];
+                  final fraction = (fuel / tankCapacity).clamp(0.0, 1.0);
+                  final day = now.add(Duration(days: i + 1));
+                  final dayLabel = weekdays[day.weekday - 1];
+
+                  Color barColor = AppTheme.accentGreen;
+                  if (fraction < 0.25) {
+                    barColor = AppTheme.accentRed;
+                  } else if (fraction < 0.5) {
+                    barColor = AppTheme.accentOrange;
+                  }
+
+                  return Expanded(
+                    child: Column(
+                      children: [
+                        Text(
+                          '${fuel.toStringAsFixed(1)}L',
+                          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                fontSize: 9,
+                                color: fuel <= 0.8 ? AppTheme.accentRed : AppTheme.textMuted,
+                                fontWeight: fuel <= 0.8 ? FontWeight.bold : FontWeight.normal,
+                              ),
+                        ),
+                        const SizedBox(height: 6),
+                        Container(
+                          height: 70,
+                          width: 14,
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Stack(
+                            alignment: Alignment.bottomCenter,
+                            children: [
+                              AnimatedContainer(
+                                duration: const Duration(milliseconds: 500),
+                                height: 70 * fraction,
+                                decoration: BoxDecoration(
+                                  color: barColor,
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          dayLabel,
+                          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                fontWeight: day.weekday == DateTime.now().weekday ? FontWeight.bold : FontWeight.normal,
+                              ),
+                        ),
+                      ],
+                    ),
+                  );
+                }),
+              ),
+            ],
+          ),
+        );
+      },
+      loading: () => const SizedBox(
+        height: 120,
+        child: Center(child: CircularProgressIndicator()),
+      ),
+      error: (err, _) => Container(
+        padding: const EdgeInsets.all(16),
+        child: Text('Forecast Error: $err', style: const TextStyle(color: AppTheme.accentRed)),
       ),
     );
   }

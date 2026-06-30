@@ -11,6 +11,13 @@ import 'package:fuel_tracker_app/models/service_record.dart';
 import 'package:fuel_tracker_app/core/analytics/service_engine.dart';
 import 'package:fuel_tracker_app/core/analytics/health_score.dart';
 import 'package:fuel_tracker_app/core/analytics/refill_predictor.dart';
+import 'package:fuel_tracker_app/core/analytics/mileage_engine.dart';
+import 'package:fuel_tracker_app/core/analytics/pattern_analyser.dart';
+import 'package:fuel_tracker_app/core/analytics/fuel_estimator.dart';
+import 'package:fuel_tracker_app/services/achievement_service.dart';
+import 'package:fuel_tracker_app/services/milestone_service.dart';
+import 'package:fuel_tracker_app/core/database/backup_service.dart';
+import 'package:fuel_tracker_app/features/settings/controller.dart';
 
 // ─── Service Providers ───────────────────────────────────────────────
 
@@ -31,6 +38,22 @@ final fuelServiceProvider = Provider<FuelService>((ref) {
 
 final vehicleServiceProvider = Provider<VehicleService>((ref) {
   return VehicleService(ref.read(databaseServiceProvider));
+});
+
+final achievementServiceProvider = Provider<AchievementService>((ref) {
+  return AchievementService(ref.read(databaseServiceProvider));
+});
+
+final milestoneServiceProvider = Provider<MilestoneService>((ref) {
+  return MilestoneService(ref.read(databaseServiceProvider));
+});
+
+final backupServiceProvider = Provider<BackupService>((ref) {
+  return BackupService(ref.read(databaseServiceProvider));
+});
+
+final settingsControllerProvider = Provider<SettingsController>((ref) {
+  return SettingsController(ref);
 });
 
 // ─── Data Providers ──────────────────────────────────────────────────
@@ -73,6 +96,32 @@ final estimatedRangeProvider = FutureProvider<double>((ref) async {
 /// Rolling average mileage (km/L).
 final averageMileageProvider = FutureProvider<double>((ref) async {
   return ref.read(fuelServiceProvider).getRollingAverageMileage();
+});
+
+/// Mileage prediction confidence (percentage 0 - 100).
+final mileageConfidenceProvider = FutureProvider<int>((ref) async {
+  final entries = await ref.watch(allFuelEntriesProvider.future);
+  final confidence = MileageEngine.calculateMileageConfidence(entries);
+  return (confidence * 100).round();
+});
+
+/// Day of week average distances.
+final dayAveragesProvider = FutureProvider<Map<int, double>>((ref) async {
+  final trips = await ref.watch(allTripsProvider.future);
+  return PatternAnalyser.dayOfWeekAverages(trips);
+});
+
+/// 7-day predictive fuel forecast (litres).
+final predictiveFuelForecastProvider = FutureProvider<List<double>>((ref) async {
+  final currentFuel = await ref.watch(fuelRemainingProvider.future);
+  final avgMileage = await ref.watch(averageMileageProvider.future);
+  final dayAverages = await ref.watch(dayAveragesProvider.future);
+  
+  return FuelEstimator.predict7DayForecast(
+    currentFuelL: currentFuel,
+    averageMileageKmPerL: avgMileage,
+    dayAverages: dayAverages,
+  );
 });
 
 /// Monthly fuel spend (₹).
@@ -176,4 +225,19 @@ final refillPredictionProvider = FutureProvider<RefillPrediction>((ref) async {
     averageMileageKmPerL: avgMileage,
     reserveL: profile.reserveL,
   );
+});
+
+/// List of all achievements.
+final achievementsProvider = FutureProvider<List<Achievement>>((ref) async {
+  return ref.watch(achievementServiceProvider).getAchievements();
+});
+
+/// List of all milestones.
+final milestonesProvider = FutureProvider<List<Milestone>>((ref) async {
+  return ref.watch(milestoneServiceProvider).getMilestones();
+});
+
+/// App Settings map.
+final appSettingsProvider = FutureProvider<Map<String, dynamic>>((ref) async {
+  return (await ref.watch(databaseServiceProvider).getSettings()) ?? {};
 });
