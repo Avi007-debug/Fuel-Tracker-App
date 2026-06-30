@@ -135,7 +135,7 @@ class QuickActions extends ConsumerWidget {
     );
   }
 
-  void _showFuelSheet(BuildContext context, WidgetRef ref) async {
+  void _showFuelSheet(BuildContext context, WidgetRef ref) {
     final amountController = TextEditingController();
     final litresController = TextEditingController();
     final priceController = TextEditingController();
@@ -143,23 +143,9 @@ class QuickActions extends ConsumerWidget {
     bool isLitresMode = false;
     bool isLoadingPrice = true;
     bool hasFetchedPrice = false;
+    bool _fetchStarted = false;
     String? receiptPhotoPath;
-
-    // Try to fetch live price
-    final livePrice = await FuelPriceService.fetchPetrolPrice();
-    if (livePrice != null) {
-      priceController.text = livePrice.toStringAsFixed(2);
-      hasFetchedPrice = true;
-    } else {
-      // Try cached price
-      final cachedPrice = await FuelPriceService.getCachedPrice();
-      if (cachedPrice != null) {
-        priceController.text = cachedPrice.toStringAsFixed(2);
-      }
-    }
-    isLoadingPrice = false;
-
-    if (!context.mounted) return;
+    double? livePrice;
 
     showModalBottomSheet(
       context: context,
@@ -169,7 +155,30 @@ class QuickActions extends ConsumerWidget {
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setState) => Padding(
+        builder: (ctx, setState) {
+          if (!_fetchStarted) {
+            _fetchStarted = true;
+            FuelPriceService.fetchPetrolPrice().then((fetchedLive) {
+              if (fetchedLive != null) {
+                livePrice = fetchedLive;
+                if (priceController.text.isEmpty) {
+                  priceController.text = livePrice!.toStringAsFixed(2);
+                }
+                hasFetchedPrice = true;
+                if (ctx.mounted) setState(() => isLoadingPrice = false);
+              } else {
+                FuelPriceService.getCachedPrice().then((cachedPrice) {
+                  if (cachedPrice != null) {
+                    if (priceController.text.isEmpty) {
+                      priceController.text = cachedPrice.toStringAsFixed(2);
+                    }
+                  }
+                  if (ctx.mounted) setState(() => isLoadingPrice = false);
+                });
+              }
+            });
+          }
+          return Padding(
           padding: EdgeInsets.fromLTRB(
             24,
             24,
@@ -364,10 +373,11 @@ class QuickActions extends ConsumerWidget {
               ),
             ],
           ),
-        ),
-      ),
-    );
-  }
+        );
+      },
+    ),
+  );
+}
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
