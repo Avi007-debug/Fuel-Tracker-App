@@ -681,7 +681,7 @@ class CumulativeDistanceChart extends ConsumerWidget {
         return _ChartContainer(
           title: 'Cumulative Distance',
           subtitle: 'Total km over time',
-          color: AppTheme.accentCyan,
+          color: AppTheme.accentTeal,
           child: LineChart(
             LineChartData(
               gridData: FlGridData(
@@ -712,15 +712,15 @@ class CumulativeDistanceChart extends ConsumerWidget {
                 LineChartBarData(
                   spots: spots,
                   isCurved: false,
-                  color: AppTheme.accentCyan,
+                  color: AppTheme.accentTeal,
                   barWidth: 2,
                   dotData: FlDotData(show: false),
                   belowBarData: BarAreaData(
                     show: true,
                     gradient: LinearGradient(
                       colors: [
-                        AppTheme.accentCyan.withAlpha(40),
-                        AppTheme.accentCyan.withAlpha(0),
+                        AppTheme.accentTeal.withAlpha(40),
+                        AppTheme.accentTeal.withAlpha(0),
                       ],
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
@@ -927,7 +927,7 @@ class MonthlyDistanceChart extends ConsumerWidget {
               barRods: [
                 BarChartRodData(
                   toY: monthlyDistance[last6Months[i]]!,
-                  color: AppTheme.accentCyan,
+                  color: AppTheme.accentTeal,
                   width: 20,
                   borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
                 ),
@@ -939,7 +939,7 @@ class MonthlyDistanceChart extends ConsumerWidget {
         return _ChartContainer(
           title: 'Monthly Distance',
           subtitle: 'Last 6 months',
-          color: AppTheme.accentCyan,
+          color: AppTheme.accentTeal,
           child: BarChart(
             BarChartData(
               alignment: BarChartAlignment.spaceAround,

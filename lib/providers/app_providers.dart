@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:fuel_tracker_app/core/database/database_service.dart';
@@ -8,6 +9,7 @@ import 'package:fuel_tracker_app/models/trip.dart';
 import 'package:fuel_tracker_app/models/fuel_entry.dart';
 import 'package:fuel_tracker_app/models/vehicle_profile.dart';
 import 'package:fuel_tracker_app/models/service_record.dart';
+import 'package:fuel_tracker_app/models/daily_cost.dart';
 import 'package:fuel_tracker_app/core/analytics/service_engine.dart';
 import 'package:fuel_tracker_app/core/analytics/health_score.dart';
 import 'package:fuel_tracker_app/core/analytics/refill_predictor.dart';
@@ -19,6 +21,7 @@ import 'package:fuel_tracker_app/services/milestone_service.dart';
 import 'package:fuel_tracker_app/core/database/backup_service.dart';
 import 'package:fuel_tracker_app/features/settings/controller.dart';
 import 'package:fuel_tracker_app/core/ai/llm_service.dart';
+import 'package:fuel_tracker_app/services/daily_cost_service.dart';
 
 // ─── Service Providers ───────────────────────────────────────────────
 
@@ -41,6 +44,10 @@ final vehicleServiceProvider = Provider<VehicleService>((ref) {
   return VehicleService(ref.read(databaseServiceProvider));
 });
 
+final dailyCostServiceProvider = Provider<DailyCostService>((ref) {
+  return DailyCostService(ref.read(databaseServiceProvider));
+});
+
 final achievementServiceProvider = Provider<AchievementService>((ref) {
   return AchievementService(ref.read(databaseServiceProvider));
 });
@@ -61,6 +68,35 @@ final llmServiceProvider = Provider<LlmService>((ref) {
   final service = LlmService();
   ref.onDispose(() => service.dispose());
   return service;
+});
+
+class ThemeModeNotifier extends StateNotifier<ThemeMode> {
+  final Ref _ref;
+  
+  ThemeModeNotifier(this._ref) : super(ThemeMode.dark) {
+    _init();
+  }
+
+  void _init() async {
+    final settings = await _ref.read(databaseServiceProvider).getSettings();
+    if (settings != null && settings['themeMode'] == 'light') {
+      state = ThemeMode.light;
+    } else {
+      state = ThemeMode.dark;
+    }
+  }
+
+  void toggleTheme() async {
+    state = state == ThemeMode.dark ? ThemeMode.light : ThemeMode.dark;
+    final db = _ref.read(databaseServiceProvider);
+    final current = (await db.getSettings()) ?? {};
+    current['themeMode'] = state.name;
+    await db.saveSettings(current);
+  }
+}
+
+final themeModeProvider = StateNotifierProvider<ThemeModeNotifier, ThemeMode>((ref) {
+  return ThemeModeNotifier(ref);
 });
 
 // ─── Data Providers ──────────────────────────────────────────────────
@@ -160,6 +196,22 @@ final tripCountProvider = FutureProvider<int>((ref) async {
 final allServiceRecordsProvider = FutureProvider<List<ServiceRecord>>((ref) async {
   return ref.read(databaseServiceProvider).getAllServiceRecords();
 });
+
+// ─── Daily Costs ─────────────────────────────────────────────────────
+
+final allDailyCostsProvider = FutureProvider<List<DailyCost>>((ref) async {
+  return ref.read(dailyCostServiceProvider).getAllDailyCosts();
+});
+
+final weeklyDailyCostProvider = FutureProvider<double>((ref) async {
+  return ref.read(dailyCostServiceProvider).getWeeklyCost();
+});
+
+final monthlyDailyCostProvider = FutureProvider<double>((ref) async {
+  return ref.read(dailyCostServiceProvider).getMonthlyCost();
+});
+
+// ─── Analytics ───────────────────────────────────────────────────────
 
 /// Service status for all types.
 final serviceStatusProvider = FutureProvider<List<ServiceStatus>>((ref) async {

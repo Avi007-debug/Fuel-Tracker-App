@@ -86,4 +86,22 @@ class SettingsController {
   Future<void> deleteModel() async {
     await _ref.read(aiChatProvider.notifier).deleteModel();
   }
+
+  /// Delete data within a specific date range.
+  Future<void> deleteDataInRange(DateTime from, DateTime to) async {
+    final db = _ref.read(databaseServiceProvider);
+    await db.deleteDataInRange(from, to);
+    
+    // Invalidate state so UI reloads fresh data
+    _ref.invalidate(allTripsProvider);
+    _ref.invalidate(allFuelEntriesProvider);
+    _ref.invalidate(allServiceRecordsProvider);
+    _ref.invalidate(allDailyCostsProvider);
+    _ref.invalidate(fuelRemainingProvider);
+    _ref.invalidate(estimatedRangeProvider);
+    _ref.invalidate(averageMileageProvider);
+    _ref.invalidate(monthSpendProvider);
+    _ref.invalidate(weeklyDailyCostProvider);
+    _ref.invalidate(monthlyDailyCostProvider);
+  }
 }

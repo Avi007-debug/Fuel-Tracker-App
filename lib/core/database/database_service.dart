@@ -7,6 +7,7 @@ import 'package:fuel_tracker_app/models/trip.dart';
 import 'package:fuel_tracker_app/models/fuel_entry.dart';
 import 'package:fuel_tracker_app/models/vehicle_profile.dart';
 import 'package:fuel_tracker_app/models/service_record.dart';
+import 'package:fuel_tracker_app/models/daily_cost.dart';
 
 /// JSON-file-backed persistence layer.
 ///
@@ -158,6 +159,28 @@ class DatabaseService {
 
   // ─── Settings ─────────────────────────────────────────────────────
 
+  // ─── Daily Costs ──────────────────────────────────────────────────
+
+  Future<List<DailyCost>> getAllDailyCosts() async {
+    final list = await _readList('daily_costs');
+    return list.map((e) => DailyCost.fromJson(e)).toList()
+      ..sort((a, b) => b.timestamp.compareTo(a.timestamp));
+  }
+
+  Future<void> addDailyCost(DailyCost cost) async {
+    final list = await _readList('daily_costs');
+    list.add(cost.toJson());
+    await _writeList('daily_costs', list);
+  }
+
+  Future<void> deleteDailyCost(String id) async {
+    final list = await _readList('daily_costs');
+    list.removeWhere((e) => e['id'] == id);
+    await _writeList('daily_costs', list);
+  }
+
+  // ─── Settings ─────────────────────────────────────────────────────
+
   Future<Map<String, dynamic>?> getSettings() async {
     return _readSingle('settings');
   }
@@ -177,6 +200,8 @@ class DatabaseService {
           (await getAllFuelEntries()).map((e) => e.toJson()).toList(),
       'service_records':
           (await getAllServiceRecords()).map((e) => e.toJson()).toList(),
+      'daily_costs':
+          (await getAllDailyCosts()).map((e) => e.toJson()).toList(),
       'settings': await getSettings(),
       'exported_at': DateTime.now().toIso8601String(),
     };
@@ -184,10 +209,49 @@ class DatabaseService {
 
   /// Wipe all data.
   Future<void> wipeAll() async {
-    for (final name in ['vehicle_profile', 'trips', 'fuel_entries', 'service_records', 'settings']) {
+    for (final name in ['vehicle_profile', 'trips', 'fuel_entries', 'service_records', 'daily_costs', 'settings']) {
       final file = _file(name);
       if (file.existsSync()) await file.delete();
     }
+  }
+
+  /// Wipe data within a specific date range (inclusive).
+  Future<void> deleteDataInRange(DateTime from, DateTime to) async {
+    // 1. Trips
+    final trips = await _readList('trips');
+    trips.removeWhere((e) {
+      final dt = DateTime.parse(e['timestamp']);
+      return dt.isAfter(from.subtract(const Duration(seconds: 1))) && 
+             dt.isBefore(to.add(const Duration(days: 1)));
+    });
+    await _writeList('trips', trips);
+
+    // 2. Fuel Entries
+    final fuel = await _readList('fuel_entries');
+    fuel.removeWhere((e) {
+      final dt = DateTime.parse(e['timestamp']);
+      return dt.isAfter(from.subtract(const Duration(seconds: 1))) && 
+             dt.isBefore(to.add(const Duration(days: 1)));
+    });
+    await _writeList('fuel_entries', fuel);
+
+    // 3. Service Records
+    final services = await _readList('service_records');
+    services.removeWhere((e) {
+      final dt = DateTime.parse(e['completedAt']);
+      return dt.isAfter(from.subtract(const Duration(seconds: 1))) && 
+             dt.isBefore(to.add(const Duration(days: 1)));
+    });
+    await _writeList('service_records', services);
+
+    // 4. Daily Costs
+    final costs = await _readList('daily_costs');
+    costs.removeWhere((e) {
+      final dt = DateTime.parse(e['timestamp']);
+      return dt.isAfter(from.subtract(const Duration(seconds: 1))) && 
+             dt.isBefore(to.add(const Duration(days: 1)));
+    });
+    await _writeList('daily_costs', costs);
   }
 
   /// Restore database from an exported map.
@@ -230,6 +294,14 @@ class DatabaseService {
       await _writeList('service_records', list);
     } else {
       await _writeList('service_records', []);
+    }
+
+    // Save daily costs
+    if (data['daily_costs'] != null) {
+      final list = (data['daily_costs'] as List).cast<Map<String, dynamic>>();
+      await _writeList('daily_costs', list);
+    } else {
+      await _writeList('daily_costs', []);
     }
   }
 }

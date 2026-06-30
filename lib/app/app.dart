@@ -8,21 +8,22 @@ import 'package:fuel_tracker_app/providers/app_providers.dart';
 
 /// Root application widget.
 /// Handles onboarding redirect before showing the main app.
-class ActivaTrackerApp extends ConsumerWidget {
-  const ActivaTrackerApp({super.key});
+class VoyageApp extends ConsumerWidget {
+  const VoyageApp({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isOnboardedAsync = ref.watch(isOnboardedProvider);
+    final themeMode = ref.watch(themeModeProvider);
 
     return MaterialApp.router(
-      title: 'Activa Tracker',
+      title: 'Voyage',
       debugShowCheckedModeBanner: false,
 
       // Theming
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
-      themeMode: ThemeMode.dark, // dark-first
+      themeMode: themeMode,
 
       // Navigation
       routerConfig: appRouter,

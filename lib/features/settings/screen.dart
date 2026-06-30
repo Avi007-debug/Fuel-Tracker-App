@@ -585,7 +585,7 @@ class SettingsScreen extends ConsumerWidget {
                 child: _SettingsSection(
                   title: 'Data',
                   icon: Icons.storage_outlined,
-                  color: AppTheme.accentCyan,
+                  color: AppTheme.accentTeal,
                   children: [
                     _SettingsTile(
                       icon: Icons.backup_outlined,
@@ -606,6 +606,13 @@ class SettingsScreen extends ConsumerWidget {
                       title: 'Restore',
                       subtitle: 'Import database state from backup JSON',
                       onTap: () => _showRestoreDialog(context, controller),
+                    ),
+                    _SettingsTile(
+                      icon: Icons.delete_sweep_outlined,
+                      title: 'Delete Data by Date Range',
+                      subtitle: 'Clear all records within a timeframe',
+                      titleColor: AppTheme.accentRed,
+                      onTap: () => _showDateRangeDeleteDialog(context, controller),
                     ),
                     _SettingsTile(
                       icon: Icons.delete_forever_outlined,
@@ -750,5 +757,57 @@ class _SettingsTile extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+void _showDateRangeDeleteDialog(BuildContext context, SettingsController controller) async {
+  final picked = await showDateRangePicker(
+    context: context,
+    firstDate: DateTime(2000),
+    lastDate: DateTime(2100),
+    builder: (context, child) {
+      return Theme(
+        data: Theme.of(context).copyWith(
+          colorScheme: Theme.of(context).colorScheme.copyWith(
+                primary: AppTheme.accentRed,
+                onPrimary: Colors.white,
+              ),
+        ),
+        child: child!,
+      );
+    },
+  );
+
+  if (picked != null) {
+    if (!context.mounted) return;
+    
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: Theme.of(ctx).cardTheme.color,
+        title: const Text('Confirm Deletion', style: TextStyle(color: AppTheme.accentRed)),
+        content: Text('Delete ALL data from ${picked.start.toString().split(' ')[0]} to ${picked.end.toString().split(' ')[0]}? This cannot be undone.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: AppTheme.accentRed),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      await controller.deleteDataInRange(picked.start, picked.end);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Data within date range deleted successfully.')),
+        );
+      }
+    }
   }
 }

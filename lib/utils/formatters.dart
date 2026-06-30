@@ -32,7 +32,7 @@ class Formatters {
       _currencyDecimal.format(value);
 
   /// 52.4
-  static String decimal1(double value) => _decimal1.format(value);
+  static String decimal1(double value) => value.toStringAsFixed(1);
 
   /// 52.43
   static String decimal2(double value) => _decimal2.format(value);
@@ -59,7 +59,7 @@ class Formatters {
   static String litres(double l) => '${decimal1(l)} L';
 
   /// "15.6 km"
-  static String distance(double km) => '${decimal1(km)} km';
+  static String distance(double km) => '${km.toStringAsFixed(1)} km';
 
   /// "₹3.2/km"
   static String costPerKm(double cost) => '₹${decimal1(cost)}/km';

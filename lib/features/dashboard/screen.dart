@@ -71,6 +71,17 @@ class DashboardScreen extends ConsumerWidget {
                         ],
                       ),
                       const Spacer(),
+                      // Theme toggle
+                      IconButton(
+                        onPressed: () {
+                          ref.read(themeModeProvider.notifier).toggleTheme();
+                        },
+                        icon: Icon(
+                          ref.watch(themeModeProvider) == ThemeMode.light
+                              ? Icons.dark_mode_outlined
+                              : Icons.lightbulb_outline,
+                        ),
+                      ),
                       // Notification bell
                       IconButton(
                         onPressed: () {

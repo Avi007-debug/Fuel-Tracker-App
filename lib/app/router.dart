@@ -8,6 +8,7 @@ import 'package:fuel_tracker_app/features/insights/screen.dart';
 import 'package:fuel_tracker_app/features/settings/screen.dart';
 import 'package:fuel_tracker_app/features/ai_chat/screen.dart';
 import 'package:fuel_tracker_app/features/onboarding/screen.dart';
+import 'package:fuel_tracker_app/features/daily_costs/screen.dart';
 
 /// Named route paths.
 class AppRoutes {
@@ -20,6 +21,7 @@ class AppRoutes {
   static const String settings = '/settings';
   static const String aiChat = '/ai-chat';
   static const String onboarding = '/onboarding';
+  static const String dailyCosts = '/daily-costs';
 }
 
 /// GoRouter configuration with a bottom-nav shell.
@@ -80,6 +82,24 @@ final GoRouter appRouter = GoRouter(
           return SlideTransition(
             position: Tween<Offset>(
               begin: const Offset(0, 1),
+              end: Offset.zero,
+            ).animate(CurvedAnimation(
+              parent: animation,
+              curve: Curves.easeOutCubic,
+            )),
+            child: child,
+          );
+        },
+      ),
+    ),
+    GoRoute(
+      path: AppRoutes.dailyCosts,
+      pageBuilder: (context, state) => CustomTransitionPage(
+        child: const DailyCostsScreen(),
+        transitionsBuilder: (context, animation, _, child) {
+          return SlideTransition(
+            position: Tween<Offset>(
+              begin: const Offset(1, 0),
               end: Offset.zero,
             ).animate(CurvedAnimation(
               parent: animation,

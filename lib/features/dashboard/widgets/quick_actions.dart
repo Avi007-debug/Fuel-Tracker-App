@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:go_router/go_router.dart';
+
 import 'package:fuel_tracker_app/app/theme.dart';
+import 'package:fuel_tracker_app/app/router.dart';
 import 'package:fuel_tracker_app/models/route_type.dart';
 import 'package:fuel_tracker_app/providers/app_providers.dart';
 import 'package:fuel_tracker_app/core/fuel_price/fuel_price_service.dart';
@@ -422,7 +425,7 @@ class QuickActions extends ConsumerWidget {
               child: _ActionButton(
                 icon: Icons.pedal_bike,
                 label: 'Short\nRide',
-                color: AppTheme.accentCyan,
+                color: AppTheme.accentTeal,
                 subtitle: '2.0 km',
                 onTap: () => _showDirectionPicker(
                   context,
@@ -441,6 +444,21 @@ class QuickActions extends ConsumerWidget {
                 color: AppTheme.textSecondary,
                 subtitle: '? km',
                 onTap: () => _showCustomRideSheet(context, ref),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 10),
+        // Row 3: Commute Costs
+        Row(
+          children: [
+            Expanded(
+              child: _ActionButton(
+                icon: Icons.account_balance_wallet,
+                label: 'Commute\nCosts',
+                color: AppTheme.accentTeal,
+                subtitle: '₹',
+                onTap: () => context.push(AppRoutes.dailyCosts),
               ),
             ),
           ],

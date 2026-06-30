@@ -239,7 +239,7 @@ class _TripTile extends ConsumerWidget {
         return AppTheme.accentPurple;
       case RouteType.shortGo:
       case RouteType.shortReturn:
-        return AppTheme.accentCyan;
+        return AppTheme.accentTeal;
       case RouteType.custom:
         return AppTheme.accentOrange;
     }

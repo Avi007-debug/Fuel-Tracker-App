@@ -7,39 +7,40 @@ class AppTheme {
   AppTheme._();
 
   // ─── Colour Palette ────────────────────────────────────────────────
-  static const Color primaryDark = Color(0xFF0D1117);
-  static const Color surfaceDark = Color(0xFF161B22);
-  static const Color cardDark = Color(0xFF1C2128);
-  static const Color borderDark = Color(0xFF30363D);
+  static const Color primaryDark = Color(0xFF0B0F19);
+  static const Color surfaceDark = Color(0xFF111827);
+  static const Color cardDark = Color(0xFF1F2937);
+  static const Color borderDark = Color(0xFF374151);
 
-  static const Color primaryLight = Color(0xFFF6F8FA);
+  static const Color primaryLight = Color(0xFFF8FAFC);
   static const Color surfaceLight = Color(0xFFFFFFFF);
-  static const Color cardLight = Color(0xFFF0F4FF);
-  static const Color borderLight = Color(0xFFD0D7DE);
+  static const Color cardLight = Color(0xFFF1F5F9);
+  static const Color borderLight = Color(0xFFE2E8F0);
 
-  static const Color accentGreen = Color(0xFF00D68F);
-  static const Color accentBlue = Color(0xFF3B82F6);
-  static const Color accentOrange = Color(0xFFF59E0B);
+  // Vibrant Accents matching Logo (Purple, Blue, Teal)
   static const Color accentPurple = Color(0xFF8B5CF6);
+  static const Color accentBlue = Color(0xFF3B82F6);
+  static const Color accentTeal = Color(0xFF14B8A6);
+  static const Color accentGreen = Color(0xFF10B981);
+  static const Color accentOrange = Color(0xFFF59E0B);
   static const Color accentRed = Color(0xFFEF4444);
-  static const Color accentCyan = Color(0xFF06B6D4);
 
-  static const Color textPrimary = Color(0xFFE6EDF3);
-  static const Color textSecondary = Color(0xFF8B949E);
-  static const Color textMuted = Color(0xFF484F58);
+  static const Color textPrimary = Color(0xFFF9FAFB);
+  static const Color textSecondary = Color(0xFF9CA3AF);
+  static const Color textMuted = Color(0xFF4B5563);
 
-  static const Color textPrimaryLight = Color(0xFF1F2328);
-  static const Color textSecondaryLight = Color(0xFF656D76);
+  static const Color textPrimaryLight = Color(0xFF111827);
+  static const Color textSecondaryLight = Color(0xFF6B7280);
 
   // ─── Gradients ─────────────────────────────────────────────────────
   static const LinearGradient primaryGradient = LinearGradient(
-    colors: [Color(0xFF00D68F), Color(0xFF06B6D4)],
+    colors: [Color(0xFF8B5CF6), Color(0xFF3B82F6), Color(0xFF14B8A6)],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
 
   static const LinearGradient cardGradient = LinearGradient(
-    colors: [Color(0xFF1C2128), Color(0xFF21262D)],
+    colors: [Color(0xFF1F2937), Color(0xFF374151)],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
