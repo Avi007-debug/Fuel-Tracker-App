@@ -2580,6 +2580,7 @@ class StackedMonthlyDistanceChart extends ConsumerWidget {
           title: 'Monthly Distance Breakdown',
           subtitle: 'Cumulative riding split by route type (last 6 months)',
           color: AppTheme.accentGreen,
+          height: 320,
           child: Column(
             children: [
               SizedBox(
@@ -2692,6 +2693,7 @@ class AiPredictionOverlayChart extends ConsumerWidget {
           title: 'Actual vs AI Predicted Mileage',
           subtitle: 'Actual per-refill mileage vs rolling smooth mileage overlay',
           color: AppTheme.accentOrange,
+          height: 320,
           child: Column(
             children: [
               SizedBox(

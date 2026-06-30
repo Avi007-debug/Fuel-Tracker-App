@@ -357,6 +357,8 @@ class QuickActions extends ConsumerWidget {
                     ref.invalidate(fuelRemainingProvider);
                     ref.invalidate(estimatedRangeProvider);
                     ref.invalidate(monthSpendProvider);
+                    ref.invalidate(averageMileageProvider);
+                    ref.invalidate(mileageConfidenceProvider);
 
                     if (ctx.mounted) Navigator.pop(ctx);
                     if (context.mounted) {
@@ -381,6 +383,19 @@ class QuickActions extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final tripsAsync = ref.watch(allTripsProvider);
+    bool isCollegeActive = false;
+
+    tripsAsync.whenData((trips) {
+      if (trips.isNotEmpty) {
+        final sorted = List.of(trips)..sort((a, b) => b.timestamp.compareTo(a.timestamp));
+        final lastTrip = sorted.first;
+        if (lastTrip.routeType == RouteType.collegeGo) {
+          isCollegeActive = true;
+        }
+      }
+    });
+
     return Column(
       children: [
         // Row 1: College Go, College Return, Fuel Filled
@@ -393,6 +408,7 @@ class QuickActions extends ConsumerWidget {
                 color: AppTheme.accentGreen,
                 subtitle: '7.2 km',
                 onTap: () => _logTrip(context, ref, RouteType.collegeGo),
+                isDisabled: isCollegeActive, // Disable if already at college
               ),
             ),
             const SizedBox(width: 10),
@@ -403,6 +419,7 @@ class QuickActions extends ConsumerWidget {
                 color: AppTheme.accentBlue,
                 subtitle: '8.4 km',
                 onTap: () => _logTrip(context, ref, RouteType.collegeReturn),
+                isDisabled: !isCollegeActive, // Disable if not at college
               ),
             ),
             const SizedBox(width: 10),
@@ -413,6 +430,7 @@ class QuickActions extends ConsumerWidget {
                 color: AppTheme.accentOrange,
                 subtitle: '₹',
                 onTap: () => _showFuelSheet(context, ref),
+                isDisabled: !isCollegeActive, // Only refuel between college go and return
               ),
             ),
           ],
@@ -553,6 +571,7 @@ class _ActionButton extends StatelessWidget {
   final String subtitle;
   final Color color;
   final VoidCallback onTap;
+  final bool isDisabled;
 
   const _ActionButton({
     required this.icon,
@@ -560,25 +579,28 @@ class _ActionButton extends StatelessWidget {
     required this.subtitle,
     required this.color,
     required this.onTap,
+    this.isDisabled = false,
   });
 
   @override
   Widget build(BuildContext context) {
+    final effectiveColor = isDisabled ? Theme.of(context).disabledColor : color;
+    
     return Material(
-      color: color.withAlpha(18),
+      color: effectiveColor.withAlpha(isDisabled ? 10 : 18),
       borderRadius: BorderRadius.circular(AppTheme.radiusLg),
       child: InkWell(
-        onTap: onTap,
+        onTap: isDisabled ? null : onTap,
         borderRadius: BorderRadius.circular(AppTheme.radiusLg),
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(AppTheme.radiusLg),
-            border: Border.all(color: color.withAlpha(40)),
+            border: Border.all(color: effectiveColor.withAlpha(isDisabled ? 20 : 40)),
           ),
           child: Column(
             children: [
-              Icon(icon, color: color, size: 28),
+              Icon(icon, color: effectiveColor.withAlpha(isDisabled ? 150 : 255), size: 28),
               const SizedBox(height: 8),
               Text(
                 label,
@@ -586,6 +608,7 @@ class _ActionButton extends StatelessWidget {
                       fontWeight: FontWeight.w600,
                       fontSize: 11,
                       height: 1.3,
+                      color: isDisabled ? Theme.of(context).disabledColor : null,
                     ),
                 textAlign: TextAlign.center,
               ),
@@ -593,7 +616,7 @@ class _ActionButton extends StatelessWidget {
               Text(
                 subtitle,
                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: color,
+                      color: effectiveColor,
                       fontWeight: FontWeight.w700,
                       fontSize: 10,
                     ),
