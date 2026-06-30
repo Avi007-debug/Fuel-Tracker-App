@@ -488,18 +488,20 @@ class _ChartContainer extends StatelessWidget {
   final String subtitle;
   final Color color;
   final Widget child;
+  final double? height;
 
   const _ChartContainer({
     required this.title,
     required this.subtitle,
     required this.color,
     required this.child,
+    this.height = 220,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 220,
+      height: height,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Theme.of(context).cardTheme.color,
@@ -522,7 +524,7 @@ class _ChartContainer extends StatelessWidget {
           ),
           Text(subtitle, style: Theme.of(context).textTheme.bodySmall),
           const SizedBox(height: 12),
-          Expanded(child: child),
+          if (height != null) Expanded(child: child) else child,
         ],
       ),
     );
@@ -1949,6 +1951,7 @@ class AchievementsGrid extends ConsumerWidget {
           title: 'Achievements & Badges',
           subtitle: 'Milestone badges unlocked by your riding',
           color: AppTheme.accentGreen,
+          height: null,
           child: Column(
             children: [
               GridView.builder(

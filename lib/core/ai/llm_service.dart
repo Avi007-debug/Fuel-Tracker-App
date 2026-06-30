@@ -176,7 +176,7 @@ class LlmService {
       } else if (lowerText.contains('oil') || lowerText.contains('service')) {
         response = "Based on service intervals, you should check your engine oil levels. The standard oil interval is every **3,000 km**.";
       } else if (lowerText.contains('hello') || lowerText.contains('hi') || lowerText.contains('hey')) {
-        response = "Hello Avishkar! I'm Antigravity, your Activa 6G AI companion. Ask me about your mileage, fuel levels, service reminders, or past rides!";
+        response = "Hello Avishkar! I'm your Voyage AI companion. Ask me about your mileage, fuel levels, service reminders, or past rides!";
       } else {
         response = "I have scanned your recent logs. Your average mileage is **${avgMileage.toStringAsFixed(1)} km/L**, and you have **${estimatedRange.toStringAsFixed(1)} km** of range left. Is there a specific trip or refill detail you would like me to retrieve?";
       }
@@ -188,7 +188,7 @@ class LlmService {
       }
     } else {
       final systemPrompt = '''
-You are Antigravity, the offline smart AI assistant for Avishkar's $vehicleName.
+You are Voyage AI, the offline smart AI assistant for Avishkar's $vehicleName.
 Current vehicle diagnostics and 30-day ride data:
 $contextJson
 

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:fuel_tracker_app/core/database/database_service.dart';
 import 'package:fuel_tracker_app/services/trip_service.dart';
@@ -70,33 +71,30 @@ final llmServiceProvider = Provider<LlmService>((ref) {
   return service;
 });
 
-class ThemeModeNotifier extends StateNotifier<ThemeMode> {
-  final Ref _ref;
-  
-  ThemeModeNotifier(this._ref) : super(ThemeMode.dark) {
-    _init();
-  }
+final sharedPrefsProvider = Provider<SharedPreferences>((ref) {
+  throw UnimplementedError('sharedPrefsProvider must be overridden');
+});
 
-  void _init() async {
-    final settings = await _ref.read(databaseServiceProvider).getSettings();
-    if (settings != null && settings['themeMode'] == 'light') {
-      state = ThemeMode.light;
-    } else {
-      state = ThemeMode.dark;
-    }
+class ThemeModeNotifier extends StateNotifier<ThemeMode> {
+  final SharedPreferences _prefs;
+  
+  ThemeModeNotifier(this._prefs) : super(_loadTheme(_prefs));
+
+  static ThemeMode _loadTheme(SharedPreferences prefs) {
+    final themeStr = prefs.getString('themeMode');
+    if (themeStr == 'light') return ThemeMode.light;
+    return ThemeMode.dark;
   }
 
   void toggleTheme() async {
     state = state == ThemeMode.dark ? ThemeMode.light : ThemeMode.dark;
-    final db = _ref.read(databaseServiceProvider);
-    final current = (await db.getSettings()) ?? {};
-    current['themeMode'] = state.name;
-    await db.saveSettings(current);
+    await _prefs.setString('themeMode', state.name);
   }
 }
 
 final themeModeProvider = StateNotifierProvider<ThemeModeNotifier, ThemeMode>((ref) {
-  return ThemeModeNotifier(ref);
+  final prefs = ref.watch(sharedPrefsProvider);
+  return ThemeModeNotifier(prefs);
 });
 
 // ─── Data Providers ──────────────────────────────────────────────────

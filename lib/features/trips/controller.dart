@@ -21,5 +21,7 @@ class TripsController {
     _ref.invalidate(allTripsProvider);
     _ref.invalidate(todayTripsProvider);
     _ref.invalidate(todayDistanceProvider);
+    _ref.invalidate(totalDistanceProvider);
+    _ref.invalidate(tripCountProvider);
   }
 }

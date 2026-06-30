@@ -24,6 +24,8 @@ class QuickActions extends ConsumerWidget {
     ref.invalidate(todayTripsProvider);
     ref.invalidate(todayDistanceProvider);
     ref.invalidate(allTripsProvider);
+    ref.invalidate(totalDistanceProvider);
+    ref.invalidate(tripCountProvider);
     ref.invalidate(fuelRemainingProvider);
     ref.invalidate(estimatedRangeProvider);
 
@@ -39,6 +41,8 @@ class QuickActions extends ConsumerWidget {
               ref.invalidate(todayTripsProvider);
               ref.invalidate(todayDistanceProvider);
               ref.invalidate(allTripsProvider);
+              ref.invalidate(totalDistanceProvider);
+              ref.invalidate(tripCountProvider);
             },
           ),
         ),
@@ -109,6 +113,8 @@ class QuickActions extends ConsumerWidget {
                   ref.invalidate(todayTripsProvider);
                   ref.invalidate(todayDistanceProvider);
                   ref.invalidate(allTripsProvider);
+                  ref.invalidate(totalDistanceProvider);
+                  ref.invalidate(tripCountProvider);
 
                   if (ctx.mounted) Navigator.pop(ctx);
                   if (context.mounted) {

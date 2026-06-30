@@ -19,6 +19,7 @@ class GreetingCard extends ConsumerWidget {
     final fuelRemaining = ref.watch(fuelRemainingProvider);
     final estimatedRange = ref.watch(estimatedRangeProvider);
     final monthSpend = ref.watch(monthSpendProvider);
+    final todayDistance = ref.watch(todayDistanceProvider);
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -62,9 +63,11 @@ class GreetingCard extends ConsumerWidget {
               _StatChip(
                 icon: Icons.route,
                 label: 'Today\'s Commute',
-                value: DateHelpers.isWeekday
-                    ? '${AppConstants.expectedDailyCommuteKm} km'
-                    : '0 km',
+                value: todayDistance.when(
+                  data: (v) => Formatters.distance(v),
+                  loading: () => '...',
+                  error: (_, __) => '0.0 km',
+                ),
               ),
               const SizedBox(width: 12),
               // Fuel remaining
