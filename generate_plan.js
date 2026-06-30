@@ -631,8 +631,35 @@ children.push(
 
 // ─── 8. IMPLEMENTATION PLAN ─────────────────────────────────────────────────
 children.push(
-  h1("8. Implementation Plan — Phase Breakdown"),
-  body("Total estimated timeline: 14–16 weeks for a solo developer working part-time (~15–20 hrs/week)."),
+  h1("8. Implementation Plan — Multi-Version Strategy"),
+  body("Development is divided into three distinct milestones, allowing for incremental delivery and user feedback."),
+  body(""),
+
+  // Version Overview
+  h2("Version Overview", C.accent),
+  makeTable(
+    ["Version", "Focus", "Key Deliverables", "Timeline"],
+    [
+      ["v1.0", "Core Engine & Dashboard", "AI Garage, Fuel Timeline, Health Dashboard, Achievements", "Weeks 1–11"],
+      ["v1.5", "Advanced Insights & Polish", "Enhanced AI, Advanced Charts, Widgets, PDF Export", "Weeks 12–14"],
+      ["v2.0", "Conversational LLM", "Offline Qwen2.5, Voice Queries, Smart Summaries", "Weeks 15–18"],
+    ],
+    [1800, 2700, 3600, 1260]
+  ),
+  body(""),
+  pageBreak(),
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // VERSION 1.0 — CORE ENGINE & DASHBOARD
+  // ═══════════════════════════════════════════════════════════════════════════
+  h1("VERSION 1.0 — Core Engine & Dashboard"),
+  body("Focuses on delivering a fully polished, robust fuel tracking and analytics experience without the LLM overhead."),
+  body(""),
+  bullet("AI Garage Home Screen: Immersive greeting, commute estimates, weather, actionable tips"),
+  bullet("Predictive Fuel Timeline: Intuitive visual timelines replacing basic fuel levels"),
+  bullet("Vehicle Health Dashboard: Categorized metrics (Fuel Efficiency, Maintenance, Ride Consistency, Tyres)"),
+  bullet("Achievement System: Motivational milestones (1000 km, Best Mileage, 30-day streaks)"),
+  bullet("Core Framework: Flutter, Isar DB, Notifications, and core graphs"),
   body(""),
 
   // Phase 0
@@ -776,10 +803,26 @@ children.push(
     ]
   }),
   body(""),
+  badge("✓ VERSION 1.0 COMPLETE — Core Engine Ready for Release", C.green),
+  body(""),
+  pageBreak(),
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // VERSION 1.5 — ADVANCED INSIGHTS & POLISH
+  // ═══════════════════════════════════════════════════════════════════════════
+  h1("VERSION 1.5 — Advanced Insights & Polish"),
+  body("Focuses on deepening the analytics capabilities and enriching rule-based AI."),
+  body(""),
+  bullet("Advanced AI Insights: Multi-line insights with root causes and recommendations"),
+  bullet("AI Timeline: Google Photos-style memory feed for riding milestones"),
+  bullet("AI Confidence Score: Confidence percentage attached to predictions"),
+  bullet("Expanded Analytics: Scatter plots, Radar charts, Sankey diagrams, Stacked charts, prediction overlays"),
+  bullet("Widgets & Reports: Home widgets and PDF generation"),
+  body(""),
 
   // Phase 5
-  h2("Phase 5 — Offline LLM Integration (Week 12–13)", C.accent),
-  body("Goal: Qwen2.5 0.5B running on-device, chat UI complete."),
+  h2("Phase 5 — Enhanced AI Insights & Predictions (Week 12–13)", C.accent),
+  body("Goal: Deeper analytics with confidence scoring and advanced visualizations."),
   body(""),
   new Table({
     width: { size: 9360, type: WidthType.DXA },
@@ -792,22 +835,22 @@ children.push(
         cell("Effort", { fill: C.headerBg, bold: true, color: C.white, width: 1200, isHeader: true }),
         cell("Depends On", { fill: C.headerBg, bold: true, color: C.white, width: 1320, isHeader: true }),
       ], true),
-      taskRow("Evaluate flutter_llm_inference vs ONNX Runtime Mobile", "Dev", "P0", "4h", "—"),
-      taskRow("Integrate chosen inference framework", "Dev", "P0", "6h", "evaluation"),
-      taskRow("Model download manager (first-launch, progress bar)", "Dev", "P0", "5h", "framework"),
-      taskRow("Model cache + delete flow in Settings", "Dev", "P1", "2h", "model manager"),
-      taskRow("Context builder — serialize 30-day rider data", "Dev", "P0", "4h", "analytics engine"),
-      taskRow("System prompt engineering for Qwen2.5", "Dev", "P0", "3h", "context builder"),
-      taskRow("Chat UI (message bubbles, typing indicator, FAB)", "Dev", "P0", "5h", "llm service"),
-      taskRow("Streaming token output in chat UI", "Dev", "P1", "4h", "chat UI"),
-      taskRow("Model loading state management (lazy load on open)", "Dev", "P1", "3h", "llm service"),
-      taskRow("Inference performance tuning (thread count, etc.)", "Dev", "P1", "3h", "integration"),
+      taskRow("Predictive Fuel Timeline (day-by-day bar forecast)", "Dev", "P1", "4h", "fuel estimator"),
+      taskRow("AI Confidence Score for mileage predictions", "Dev", "P1", "3h", "analytics engine"),
+      taskRow("Advanced AI Insights (multi-line causes + recommendations)", "Dev", "P1", "5h", "analytics engine"),
+      taskRow("AI Timeline (Google Photos style milestones feed)", "Dev", "P1", "6h", "trip history"),
+      taskRow("Achievement System (1000 km, Best mileage, streaks)", "Dev", "P1", "5h", "trip + fuel data"),
+      taskRow("Scatter plot: Petrol price vs cost per km", "Dev", "P2", "3h", "fl_chart"),
+      taskRow("Radar chart: Vehicle health metrics breakdown", "Dev", "P2", "3h", "health score"),
+      taskRow("Sankey diagram: Fuel → Distance → Cost flow", "Dev", "P2", "4h", "analytics engine"),
+      taskRow("Stacked monthly comparison chart", "Dev", "P2", "2h", "fl_chart"),
+      taskRow("AI prediction overlay (actual vs predicted)", "Dev", "P2", "3h", "analytics engine"),
     ]
   }),
   body(""),
 
   // Phase 6
-  h2("Phase 6 — Export, Widget & Polish (Week 14–16)", C.green),
+  h2("Phase 6 — Export, Widgets & Polish (Week 14)", C.green),
   body(""),
   new Table({
     width: { size: 9360, type: WidthType.DXA },
@@ -826,36 +869,145 @@ children.push(
       taskRow("Backup to JSON file + restore flow", "Dev", "P1", "5h", "Isar models"),
       taskRow("Settings screen — full implementation", "Dev", "P0", "6h", "all features"),
       taskRow("Accessibility audit (font sizes, contrast)", "Dev", "P2", "3h", "all UI"),
-      taskRow("Full app dark mode pass", "Dev", "P1", "4h", "all UI"),
+      taskRow("Full app dark mode polish pass", "Dev", "P1", "4h", "all UI"),
       taskRow("Performance profiling (Dart DevTools)", "Dev", "P1", "3h", "all features"),
+    ]
+  }),
+  body(""),
+  badge("✓ VERSION 1.5 COMPLETE — Enhanced Analytics Ready", C.green),
+  body(""),
+  pageBreak(),
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // VERSION 2.0 — CONVERSATIONAL LLM
+  // ═══════════════════════════════════════════════════════════════════════════
+  h1("VERSION 2.0 — Conversational AI (Offline LLM)"),
+  body("Introduces the offline LLM model for natural language interaction."),
+  body(""),
+  bullet("Offline Qwen2.5 Assistant: Full offline inference running locally on device"),
+  bullet("Conversational Memory: LLM maintains context across sessions"),
+  bullet("AI Chat Suggestions: One-tap action chips to bootstrap conversations"),
+  bullet("Voice Queries: Speech-to-text integration for hands-free usage"),
+  bullet("Smart Summaries: Natural language summaries of rider behavior"),
+  body(""),
+
+  // Phase 7
+  h2("Phase 7 — Offline LLM Integration (Week 15–16)", C.accent),
+  body("Goal: Qwen2.5 0.5B running on-device, chat UI complete."),
+  body(""),
+  new Table({
+    width: { size: 9360, type: WidthType.DXA },
+    columnWidths: [3600, 1800, 1440, 1200, 1320],
+    rows: [
+      tableRow([
+        cell("Task", { fill: C.headerBg, bold: true, color: C.white, width: 3600, isHeader: true }),
+        cell("Owner", { fill: C.headerBg, bold: true, color: C.white, width: 1800, isHeader: true }),
+        cell("Priority", { fill: C.headerBg, bold: true, color: C.white, width: 1440, isHeader: true }),
+        cell("Effort", { fill: C.headerBg, bold: true, color: C.white, width: 1200, isHeader: true }),
+        cell("Depends On", { fill: C.headerBg, bold: true, color: C.white, width: 1320, isHeader: true }),
+      ], true),
+      taskRow("Evaluate flutter_llm_inference vs ONNX Runtime Mobile", "Dev", "P0", "4h", "—"),
+      taskRow("Integrate chosen inference framework", "Dev", "P0", "6h", "evaluation"),
+      taskRow("Model download manager (resumable, progress bar)", "Dev", "P0", "5h", "framework"),
+      taskRow("Model cache + delete flow in Settings", "Dev", "P1", "2h", "model manager"),
+      taskRow("Context builder — serialize 30-day rider data", "Dev", "P0", "4h", "analytics engine"),
+      taskRow("System prompt engineering for Qwen2.5", "Dev", "P0", "3h", "context builder"),
+      taskRow("Chat UI (message bubbles, typing indicator, FAB)", "Dev", "P0", "5h", "llm service"),
+      taskRow("Streaming token output in chat UI", "Dev", "P1", "4h", "chat UI"),
+      taskRow("Model loading state management (lazy load on open)", "Dev", "P1", "3h", "llm service"),
+      taskRow("Inference performance tuning (thread count, etc.)", "Dev", "P1", "3h", "integration"),
+    ]
+  }),
+  body(""),
+
+  // Phase 8
+  h2("Phase 8 — Chat UX, Voice & Final Polish (Week 17–18)", C.purple),
+  body(""),
+  new Table({
+    width: { size: 9360, type: WidthType.DXA },
+    columnWidths: [3600, 1800, 1440, 1200, 1320],
+    rows: [
+      tableRow([
+        cell("Task", { fill: C.headerBg, bold: true, color: C.white, width: 3600, isHeader: true }),
+        cell("Owner", { fill: C.headerBg, bold: true, color: C.white, width: 1800, isHeader: true }),
+        cell("Priority", { fill: C.headerBg, bold: true, color: C.white, width: 1440, isHeader: true }),
+        cell("Effort", { fill: C.headerBg, bold: true, color: C.white, width: 1200, isHeader: true }),
+        cell("Depends On", { fill: C.headerBg, bold: true, color: C.white, width: 1320, isHeader: true }),
+      ], true),
+      taskRow("AI Chat Suggestion chips (Avg Mileage, Fuel Left, Compare)", "Dev", "P1", "3h", "chat UI"),
+      taskRow("AI Assistant with Memory (session context preservation)", "Dev", "P0", "4h", "chat UI"),
+      taskRow("Voice queries (speech-to-text integration)", "Dev", "P1", "4h", "chat UI"),
+      taskRow("Smart summaries generation via LLM", "Dev", "P1", "3h", "llm service"),
       taskRow("Memory leak audit (esp. LLM inference)", "Dev", "P0", "3h", "LLM integration"),
-      taskRow("Edge case testing (no fuel data, no trips, etc.)", "Dev", "P0", "4h", "all features"),
+      taskRow("Edge case testing (no data, etc.)", "Dev", "P0", "4h", "all features"),
       taskRow("APK build + signing + install on test device", "Dev", "P0", "2h", "all phases"),
     ]
   }),
+  body(""),
+  badge("✓ VERSION 2.0 COMPLETE — Full AI Assistant Ready", C.green),
   body(""),
   pageBreak(),
 );
 
 // ─── 9. TIMELINE SUMMARY ───────────────────────────────────────────────────
 children.push(
-  h1("9. Timeline Summary"),
+  h1("9. Timeline Summary — Multi-Version Roadmap"),
   body(""),
+  h2("Version 1.0 — Core Engine & Dashboard", C.green),
   makeTable(
     ["Phase", "Weeks", "Deliverable", "Effort Est."],
     [
       ["Phase 0 — Foundation", "1–2", "Project skeleton, Isar, Riverpod, Onboarding", "~19h"],
-      ["Phase 1 — Trip & Fuel Logging", "3–5", "Core daily use working end-to-end", "~47h"],
-      ["Phase 2 — Analytics Engine", "6–8", "All rule-based AI + predictions live", "~39h"],
+      ["Phase 1 — Trip & Fuel Logging", "3–5", "Core daily use working end-to-end", "~43h"],
+      ["Phase 2 — Analytics Engine", "6–8", "All rule-based AI + predictions live", "~41h"],
       ["Phase 3 — Dashboard & Charts", "9–10", "AI Garage + all 18 charts", "~42h"],
       ["Phase 4 — Notifications", "11", "Smart reminders + background tasks", "~18h"],
-      ["Phase 5 — Offline LLM", "12–13", "Qwen2.5 chat assistant functional", "~39h"],
-      ["Phase 6 — Export & Polish", "14–16", "PDF/CSV, widget, full polish, APK", "~45h"],
     ],
     [2700, 1200, 3600, 1860]
   ),
   body(""),
-  body("Total estimated effort: ~249 hours. At 15–20 hours/week solo, this maps to ~14–16 weeks."),
+  body("Version 1.0 Total: ~163 hours | 11 weeks"),
+  body(""),
+
+  h2("Version 1.5 — Advanced Insights & Polish", C.blue),
+  makeTable(
+    ["Phase", "Weeks", "Deliverable", "Effort Est."],
+    [
+      ["Phase 5 — Enhanced AI", "12–13", "Confidence scores, timeline, achievements, advanced charts", "~38h"],
+      ["Phase 6 — Export & Polish", "14", "PDF/CSV, widgets, settings, polish", "~38h"],
+    ],
+    [2700, 1200, 3600, 1860]
+  ),
+  body(""),
+  body("Version 1.5 Total: ~76 hours | 3 weeks"),
+  body(""),
+
+  h2("Version 2.0 — Conversational LLM", C.purple),
+  makeTable(
+    ["Phase", "Weeks", "Deliverable", "Effort Est."],
+    [
+      ["Phase 7 — LLM Integration", "15–16", "Qwen2.5 on-device, chat UI, model management", "~39h"],
+      ["Phase 8 — Chat UX & Voice", "17–18", "Voice queries, smart summaries, final testing", "~23h"],
+    ],
+    [2700, 1200, 3600, 1860]
+  ),
+  body(""),
+  body("Version 2.0 Total: ~62 hours | 4 weeks"),
+  body(""),
+
+  h2("Grand Total", C.accent),
+  makeTable(
+    ["Version", "Timeline", "Total Effort", "Release Status"],
+    [
+      ["v1.0 — Core Engine", "Weeks 1–11", "~163h", "Production Ready"],
+      ["v1.5 — Advanced", "Weeks 12–14", "~76h", "Production Ready"],
+      ["v2.0 — LLM", "Weeks 15–18", "~62h", "Production Ready"],
+      ["TOTAL", "18 weeks", "~301h", "—"],
+    ],
+    [2700, 1800, 1800, 1860]
+  ),
+  body(""),
+  body("At 15–20 hours/week solo development, the complete roadmap spans ~18 weeks for all three versions."),
   body(""),
   pageBreak(),
 );
@@ -1042,6 +1194,6 @@ const doc = new Document({
 });
 
 Packer.toBuffer(doc).then(buf => {
-  fs.writeFileSync("ActivaTracker_Plan.docx", buf);
-  console.log("Done");
+  fs.writeFileSync("ActivaTracker_Plan_v2.docx", buf);
+  console.log("Done - Generated ActivaTracker_Plan_v2.docx");
 });

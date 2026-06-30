@@ -48,6 +48,11 @@ class VehicleService {
     return profile;
   }
 
+  /// Save a vehicle profile directly (for onboarding).
+  Future<void> saveProfile(VehicleProfile profile) async {
+    await _db.saveVehicleProfile(profile);
+  }
+
   /// Update the vehicle profile.
   Future<VehicleProfile> updateProfile(VehicleProfile profile) async {
     final updated = profile.copyWith(updatedAt: DateTime.now());

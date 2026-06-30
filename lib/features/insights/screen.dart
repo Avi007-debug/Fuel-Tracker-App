@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fuel_tracker_app/app/theme.dart';
 import 'package:fuel_tracker_app/providers/app_providers.dart';
 import 'package:fuel_tracker_app/utils/formatters.dart';
+import 'package:fuel_tracker_app/features/insights/widgets/charts.dart';
+import 'package:fuel_tracker_app/features/insights/widgets/service_status_panel.dart';
 
 /// Screen 4 — 📊 Insights
 ///
@@ -135,6 +137,14 @@ class InsightsScreen extends ConsumerWidget {
               ),
             ),
 
+            // ── Service Status Panel ────────────────────────────
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                child: ServiceStatusPanel(),
+              ),
+            ),
+
             // ── Quick Stats Grid ────────────────────────────────
             SliverToBoxAdapter(
               child: Padding(
@@ -180,7 +190,7 @@ class InsightsScreen extends ConsumerWidget {
               ),
             ),
 
-            // ── Charts Section (Placeholder) ────────────────────
+            // ── Charts Section ────────────────────────────
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(20, 24, 20, 8),
@@ -190,48 +200,74 @@ class InsightsScreen extends ConsumerWidget {
                 ),
               ),
             ),
+            // Mileage Trend Chart
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
-                child: _ChartPlaceholder(
-                  title: 'Mileage Trend',
-                  subtitle: 'km/L per refill interval',
-                  icon: Icons.show_chart,
-                  color: AppTheme.accentGreen,
-                ),
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                child: MileageTrendChart(),
               ),
             ),
+            // Daily Distance Chart
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-                child: _ChartPlaceholder(
-                  title: 'Daily Distance',
-                  subtitle: 'Distance logged each day',
-                  icon: Icons.bar_chart,
-                  color: AppTheme.accentBlue,
-                ),
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                child: DailyDistanceChart(),
               ),
             ),
+            // Cost per km Chart
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-                child: _ChartPlaceholder(
-                  title: 'Monthly Fuel Spend',
-                  subtitle: '₹ total per month',
-                  icon: Icons.stacked_bar_chart,
-                  color: AppTheme.accentOrange,
-                ),
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                child: CostPerKmChart(),
               ),
             ),
+            // Fuel Consumption Chart
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-                child: _ChartPlaceholder(
-                  title: 'Route Distribution',
-                  subtitle: 'College / Town / Short / Custom split',
-                  icon: Icons.pie_chart,
-                  color: AppTheme.accentPurple,
-                ),
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                child: FuelConsumptionChart(),
+              ),
+            ),
+            // Petrol Price Trend Chart
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                child: PetrolPriceTrendChart(),
+              ),
+            ),
+            // Monthly Spend Chart
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                child: MonthlySpendChart(),
+              ),
+            ),
+            // Monthly Distance Chart
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                child: MonthlyDistanceChart(),
+              ),
+            ),
+            // Route Distribution Chart
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                child: RouteDistributionChart(),
+              ),
+            ),
+            // Cumulative Distance Chart
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                child: CumulativeDistanceChart(),
+              ),
+            ),
+            // Weekly Pattern Chart
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                child: WeeklyPatternChart(),
               ),
             ),
 
@@ -435,55 +471,4 @@ class _InsightCard extends StatelessWidget {
   }
 }
 
-class _ChartPlaceholder extends StatelessWidget {
-  final String title;
-  final String subtitle;
-  final IconData icon;
-  final Color color;
 
-  const _ChartPlaceholder({
-    required this.title,
-    required this.subtitle,
-    required this.icon,
-    required this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 180,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Theme.of(context).cardTheme.color,
-        borderRadius: BorderRadius.circular(AppTheme.radiusLg),
-        border: Border.all(color: Theme.of(context).colorScheme.outline),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(icon, color: color, size: 18),
-              const SizedBox(width: 8),
-              Text(
-                title,
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-            ],
-          ),
-          Text(subtitle, style: Theme.of(context).textTheme.bodySmall),
-          const Spacer(),
-          Center(
-            child: Text(
-              'Chart renders with data',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: AppTheme.textMuted,
-                  ),
-            ),
-          ),
-          const Spacer(),
-        ],
-      ),
-    );
-  }
-}

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:fuel_tracker_app/features/dashboard/screen.dart';
 import 'package:fuel_tracker_app/features/trips/screen.dart';
@@ -7,6 +8,8 @@ import 'package:fuel_tracker_app/features/fuel/screen.dart';
 import 'package:fuel_tracker_app/features/insights/screen.dart';
 import 'package:fuel_tracker_app/features/settings/screen.dart';
 import 'package:fuel_tracker_app/features/ai_chat/screen.dart';
+import 'package:fuel_tracker_app/features/onboarding/screen.dart';
+import 'package:fuel_tracker_app/providers/app_providers.dart';
 
 /// Named route paths.
 class AppRoutes {
@@ -18,12 +21,23 @@ class AppRoutes {
   static const String insights = '/insights';
   static const String settings = '/settings';
   static const String aiChat = '/ai-chat';
+  static const String onboarding = '/onboarding';
 }
 
 /// GoRouter configuration with a bottom-nav shell.
+/// 
+/// Note: Redirect logic for onboarding is handled in app.dart
+/// using a FutureBuilder that checks isOnboardedProvider.
 final GoRouter appRouter = GoRouter(
   initialLocation: AppRoutes.dashboard,
   routes: [
+    // Onboarding route (outside shell)
+    GoRoute(
+      path: AppRoutes.onboarding,
+      pageBuilder: (context, state) => const NoTransitionPage(
+        child: OnboardingScreen(),
+      ),
+    ),
     ShellRoute(
       builder: (context, state, child) => _AppShell(child: child),
       routes: [

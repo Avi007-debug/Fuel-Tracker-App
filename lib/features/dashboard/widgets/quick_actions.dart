@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fuel_tracker_app/app/theme.dart';
 import 'package:fuel_tracker_app/models/route_type.dart';
 import 'package:fuel_tracker_app/providers/app_providers.dart';
+import 'package:fuel_tracker_app/core/fuel_price/fuel_price_service.dart';
 
 /// Quick-action grid matching the plan's 6 primary actions:
 /// 🟢 Going to College, 🔵 Returned Home, 🟡 Fuel Filled,
@@ -124,10 +125,30 @@ class QuickActions extends ConsumerWidget {
     );
   }
 
-  void _showFuelSheet(BuildContext context, WidgetRef ref) {
+  void _showFuelSheet(BuildContext context, WidgetRef ref) async {
     final amountController = TextEditingController();
+    final litresController = TextEditingController();
     final priceController = TextEditingController();
     bool isTankFull = false;
+    bool isLitresMode = false;
+    bool isLoadingPrice = true;
+    bool hasFetchedPrice = false;
+
+    // Try to fetch live price
+    final livePrice = await FuelPriceService.fetchPetrolPrice();
+    if (livePrice != null) {
+      priceController.text = livePrice.toStringAsFixed(2);
+      hasFetchedPrice = true;
+    } else {
+      // Try cached price
+      final cachedPrice = await FuelPriceService.getCachedPrice();
+      if (cachedPrice != null) {
+        priceController.text = cachedPrice.toStringAsFixed(2);
+      }
+    }
+    isLoadingPrice = false;
+
+    if (!context.mounted) return;
 
     showModalBottomSheet(
       context: context,
@@ -148,29 +169,87 @@ class QuickActions extends ConsumerWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'Fuel Filled',
-                style: Theme.of(ctx).textTheme.headlineMedium,
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Fuel Filled',
+                    style: Theme.of(ctx).textTheme.headlineMedium,
+                  ),
+                  // Mode toggle
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Theme.of(ctx).colorScheme.surfaceContainerHighest,
+                      borderRadius: BorderRadius.circular(AppTheme.radiusFull),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        _ModeChip(
+                          label: '₹',
+                          selected: !isLitresMode,
+                          onTap: () => setState(() => isLitresMode = false),
+                        ),
+                        _ModeChip(
+                          label: 'L',
+                          selected: isLitresMode,
+                          onTap: () => setState(() => isLitresMode = true),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 16),
-              TextField(
-                controller: amountController,
-                keyboardType:
-                    const TextInputType.numberWithOptions(decimal: true),
-                decoration: const InputDecoration(
-                  labelText: 'Amount Paid (₹)',
-                  prefixIcon: Icon(Icons.currency_rupee),
+              // Amount or Litres field
+              if (!isLitresMode)
+                TextField(
+                  controller: amountController,
+                  keyboardType:
+                      const TextInputType.numberWithOptions(decimal: true),
+                  decoration: const InputDecoration(
+                    labelText: 'Amount Paid (₹)',
+                    prefixIcon: Icon(Icons.currency_rupee),
+                  ),
+                  autofocus: true,
+                )
+              else
+                TextField(
+                  controller: litresController,
+                  keyboardType:
+                      const TextInputType.numberWithOptions(decimal: true),
+                  decoration: const InputDecoration(
+                    labelText: 'Litres Filled',
+                    prefixIcon: Icon(Icons.water_drop_outlined),
+                  ),
+                  autofocus: true,
                 ),
-                autofocus: true,
-              ),
               const SizedBox(height: 12),
               TextField(
                 controller: priceController,
                 keyboardType:
                     const TextInputType.numberWithOptions(decimal: true),
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'Price per Litre (₹/L)',
-                  prefixIcon: Icon(Icons.local_gas_station),
+                  prefixIcon: const Icon(Icons.local_gas_station),
+                  helperText: hasFetchedPrice
+                      ? 'Live price fetched'
+                      : 'Enter today\'s petrol price',
+                  helperStyle: TextStyle(
+                    color: hasFetchedPrice
+                        ? AppTheme.accentGreen
+                        : AppTheme.textMuted,
+                  ),
+                  suffixIcon: isLoadingPrice
+                      ? const Padding(
+                          padding: EdgeInsets.all(12),
+                          child: SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                        )
+                      : null,
                 ),
               ),
               const SizedBox(height: 12),
@@ -178,6 +257,7 @@ class QuickActions extends ConsumerWidget {
                 value: isTankFull,
                 onChanged: (v) => setState(() => isTankFull = v ?? false),
                 title: const Text('Tank Full'),
+                subtitle: const Text('For accurate mileage calculation'),
                 controlAffinity: ListTileControlAffinity.leading,
                 contentPadding: EdgeInsets.zero,
               ),
@@ -187,20 +267,43 @@ class QuickActions extends ConsumerWidget {
                 height: 48,
                 child: FilledButton.icon(
                   onPressed: () async {
-                    final amount =
-                        double.tryParse(amountController.text.trim());
                     final price =
                         double.tryParse(priceController.text.trim());
-                    if (amount == null ||
-                        amount <= 0 ||
-                        price == null ||
-                        price <= 0) return;
 
-                    await ref.read(fuelServiceProvider).addFuelByAmount(
-                          amountPaid: amount,
-                          pricePerLitre: price,
-                          isTankFull: isTankFull,
-                        );
+                    if (price == null || price <= 0) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Enter valid price per litre')),
+                      );
+                      return;
+                    }
+
+                    // Save manual price if user edited it
+                    if (!hasFetchedPrice || priceController.text != livePrice?.toStringAsFixed(2)) {
+                      await FuelPriceService.saveManualPrice(price);
+                    }
+
+                    if (!isLitresMode) {
+                      final amount =
+                          double.tryParse(amountController.text.trim());
+                      if (amount == null || amount <= 0) return;
+
+                      await ref.read(fuelServiceProvider).addFuelByAmount(
+                            amountPaid: amount,
+                            pricePerLitre: price,
+                            isTankFull: isTankFull,
+                          );
+                    } else {
+                      final litres =
+                          double.tryParse(litresController.text.trim());
+                      if (litres == null || litres <= 0) return;
+
+                      await ref.read(fuelServiceProvider).addFuelByLitres(
+                            litresFilled: litres,
+                            pricePerLitre: price,
+                            isTankFull: isTankFull,
+                          );
+                    }
+
                     ref.invalidate(allFuelEntriesProvider);
                     ref.invalidate(fuelRemainingProvider);
                     ref.invalidate(estimatedRangeProvider);
@@ -209,9 +312,8 @@ class QuickActions extends ConsumerWidget {
                     if (ctx.mounted) Navigator.pop(ctx);
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                              'Fuel logged — ₹${amount.toStringAsFixed(0)}'),
+                        const SnackBar(
+                          content: Text('Fuel entry logged'),
                         ),
                       );
                     }
@@ -433,6 +535,40 @@ class _ActionButton extends StatelessWidget {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Mode toggle chip for fuel entry.
+class _ModeChip extends StatelessWidget {
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _ModeChip({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: selected ? AppTheme.accentOrange : Colors.transparent,
+          borderRadius: BorderRadius.circular(AppTheme.radiusFull),
+        ),
+        child: Text(
+          label,
+          style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                color: selected ? Colors.white : AppTheme.textMuted,
+                fontWeight: FontWeight.w600,
+              ),
         ),
       ),
     );

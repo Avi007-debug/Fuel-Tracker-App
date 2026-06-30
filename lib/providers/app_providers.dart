@@ -7,6 +7,8 @@ import 'package:fuel_tracker_app/services/vehicle_service.dart';
 import 'package:fuel_tracker_app/models/trip.dart';
 import 'package:fuel_tracker_app/models/fuel_entry.dart';
 import 'package:fuel_tracker_app/models/vehicle_profile.dart';
+import 'package:fuel_tracker_app/models/service_record.dart';
+import 'package:fuel_tracker_app/core/analytics/service_engine.dart';
 
 // ─── Service Providers ───────────────────────────────────────────────
 
@@ -94,4 +96,24 @@ final totalDistanceProvider = FutureProvider<double>((ref) async {
 /// Total trip count.
 final tripCountProvider = FutureProvider<int>((ref) async {
   return ref.read(tripServiceProvider).getTripCount();
+});
+
+/// All service records.
+final allServiceRecordsProvider = FutureProvider<List<ServiceRecord>>((ref) async {
+  return ref.read(databaseServiceProvider).getAllServiceRecords();
+});
+
+/// Service status for all types.
+final serviceStatusProvider = FutureProvider<List<ServiceStatus>>((ref) async {
+  final records = await ref.read(allServiceRecordsProvider.future);
+  final totalDistance = await ref.read(totalDistanceProvider.future);
+  final profile = await ref.read(vehicleProfileProvider.future);
+  
+  if (profile == null) return [];
+  
+  return ServiceEngine.getAllServiceStatus(
+    records: records,
+    currentOdometerKm: totalDistance,
+    vehicle: profile,
+  );
 });
