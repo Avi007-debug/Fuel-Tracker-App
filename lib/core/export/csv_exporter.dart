@@ -26,7 +26,7 @@ class CsvExporter {
 
     await Share.shareXFiles(
       [XFile(file.path)],
-      text: 'Exported Commute Trips from Activa Tracker',
+      text: 'Exported Commute Trips from Voyage',
     );
   }
 
@@ -61,7 +61,7 @@ class CsvExporter {
 
     await Share.shareXFiles(
       [XFile(file.path)],
-      text: 'Exported Fuel Refills from Activa Tracker',
+      text: 'Exported Fuel Refills from Voyage',
     );
   }
 }

@@ -21,7 +21,7 @@ class BackupService {
 
     await Share.shareXFiles(
       [XFile(file.path)],
-      text: 'Activa Tracker Data Backup',
+      text: 'Voyage Data Backup',
     );
   }
 

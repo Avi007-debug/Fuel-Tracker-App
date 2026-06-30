@@ -132,7 +132,7 @@ class _DailyCostsScreenState extends ConsumerState<DailyCostsScreen> {
                             backgroundColor: WidgetStateProperty.resolveWith<Color>(
                               (Set<WidgetState> states) {
                                 if (states.contains(WidgetState.selected)) {
-                                  return AppTheme.accentPurple.withOpacity(0.2);
+                                  return AppTheme.accentPurple.withAlpha(51);
                                 }
                                 return Colors.transparent;
                               },
@@ -203,7 +203,7 @@ class _DailyCostsScreenState extends ConsumerState<DailyCostsScreen> {
                         leading: Container(
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
-                            color: AppTheme.accentPurple.withOpacity(0.1),
+                            color: AppTheme.accentPurple.withAlpha(25),
                             shape: BoxShape.circle,
                           ),
                           child: Icon(

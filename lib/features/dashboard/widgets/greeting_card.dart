@@ -63,8 +63,8 @@ class GreetingCard extends ConsumerWidget {
                 icon: Icons.route,
                 label: 'Today\'s Commute',
                 value: DateHelpers.isWeekday
-                    ? '${AppConstants.collegeGoingKm + AppConstants.collegeReturnKm} km'
-                    : '— km',
+                    ? '${AppConstants.expectedDailyCommuteKm} km'
+                    : '0 km',
               ),
               const SizedBox(width: 12),
               // Fuel remaining
@@ -74,7 +74,7 @@ class GreetingCard extends ConsumerWidget {
                 value: fuelRemaining.when(
                   data: (v) => Formatters.litres(v),
                   loading: () => '...',
-                  error: (_, __) => '— L',
+                  error: (_, __) => '0.0 L',
                 ),
               ),
             ],
@@ -89,7 +89,7 @@ class GreetingCard extends ConsumerWidget {
                 value: estimatedRange.when(
                   data: (v) => Formatters.distance(v),
                   loading: () => '...',
-                  error: (_, __) => '— km',
+                  error: (_, __) => '0.0 km',
                 ),
               ),
               const SizedBox(width: 12),
@@ -100,7 +100,7 @@ class GreetingCard extends ConsumerWidget {
                 value: monthSpend.when(
                   data: (v) => Formatters.currency(v),
                   loading: () => '...',
-                  error: (_, __) => '₹—',
+                  error: (_, __) => '₹0',
                 ),
               ),
             ],

@@ -53,9 +53,9 @@ class StatsStrip extends ConsumerWidget {
             icon: Icons.speed,
             label: 'Avg Mileage',
             value: averageMileage.when(
-              data: (v) => v > 0 ? Formatters.mileage(v) : '— km/L',
+              data: (v) => v > 0 ? Formatters.mileage(v) : '0.0 km/L',
               loading: () => '...',
-              error: (_, __) => '— km/L',
+              error: (_, __) => '0.0 km/L',
             ),
             color: AppTheme.accentOrange,
           ),

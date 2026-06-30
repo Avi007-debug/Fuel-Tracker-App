@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-/// Activa Tracker design system — premium dark-first theme with
+/// Voyage design system — premium dark-first theme with
 /// vibrant accent colors and glassmorphism-ready surfaces.
 class AppTheme {
   AppTheme._();
@@ -41,6 +41,12 @@ class AppTheme {
 
   static const LinearGradient cardGradient = LinearGradient(
     colors: [Color(0xFF1F2937), Color(0xFF374151)],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
+
+  static const LinearGradient cardGradientLight = LinearGradient(
+    colors: [Color(0xFFFFFFFF), Color(0xFFF1F5F9)],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );

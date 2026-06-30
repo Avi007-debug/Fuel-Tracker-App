@@ -6,8 +6,8 @@ class AppConstants {
   AppConstants._();
 
   // ─── App Info ───────────────────────────────────────────────────────
-  static const String appName = 'Activa Tracker';
-  static const String appTagline = 'Smart Personal Vehicle Companion';
+  static const String appName = 'Voyage';
+  static const String appTagline = 'Track Fuel. Save More. Ride Smarter.';
   static const String riderName = 'Avishkar';
 
   // ─── Route Distances (km) ──────────────────────────────────────────
@@ -29,6 +29,10 @@ class AppConstants {
   static const double defaultServiceIntervalKm = 3000.0;
   static const String defaultVehicleName = 'Activa';
   static const String defaultVehicleModel = 'Honda Activa 6G';
+
+  /// Today's expected round-trip commute (km), pre-computed to avoid floating-point noise.
+  static double get expectedDailyCommuteKm =>
+      double.parse((collegeGoingKm + collegeReturnKm).toStringAsFixed(1));
 
   // ─── Notification Schedule ─────────────────────────────────────────
   /// Morning trip reminder — 7:30 AM on weekdays

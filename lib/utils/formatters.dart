@@ -16,7 +16,6 @@ class Formatters {
     decimalDigits: 2,
   );
 
-  static final _decimal1 = NumberFormat('#,##0.0', 'en_IN');
   static final _decimal2 = NumberFormat('#,##0.00', 'en_IN');
   static final _integer = NumberFormat('#,##0', 'en_IN');
   static final _dateShort = DateFormat('d MMM');

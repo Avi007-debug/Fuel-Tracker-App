@@ -40,37 +40,36 @@ class DashboardScreen extends ConsumerWidget {
                   padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
                   child: Row(
                     children: [
-                      // Animated vehicle icon
-                      Container(
-                        width: 44,
-                        height: 44,
-                        decoration: BoxDecoration(
-                          gradient: AppTheme.primaryGradient,
-                          borderRadius: BorderRadius.circular(AppTheme.radiusMd),
-                        ),
-                        child: const Icon(
-                          Icons.two_wheeler,
-                          color: Colors.white,
-                          size: 24,
+                      // App Logo
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+                        child: Image.asset(
+                          'assets/logo.png',
+                          width: 44,
+                          height: 44,
+                          fit: BoxFit.cover,
                         ),
                       ),
                       const SizedBox(width: 12),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Activa Tracker',
-                            style: Theme.of(context).textTheme.titleLarge,
-                          ),
-                          Text(
-                            'AI Garage',
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                  color: AppTheme.accentGreen,
-                                ),
-                          ),
-                        ],
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Voyage',
+                              style: Theme.of(context).textTheme.titleLarge,
+                            ),
+                            Text(
+                              'Track Fuel. Save More. Ride Smarter.',
+                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    color: AppTheme.accentPurple,
+                                    fontSize: 10,
+                                  ),
+                            ),
+                          ],
+                        ),
                       ),
-                      const Spacer(),
+
                       // Theme toggle
                       IconButton(
                         onPressed: () {

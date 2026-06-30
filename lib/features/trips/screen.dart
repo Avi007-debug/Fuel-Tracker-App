@@ -80,7 +80,9 @@ class TripsScreen extends ConsumerWidget {
                 child: Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    gradient: AppTheme.cardGradient,
+                    gradient: Theme.of(context).brightness == Brightness.dark
+                        ? AppTheme.cardGradient
+                        : AppTheme.cardGradientLight,
                     borderRadius:
                         BorderRadius.circular(AppTheme.radiusLg),
                     border: Border.all(
