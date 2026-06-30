@@ -88,51 +88,51 @@
 ## Version 1.5 — Enhanced Intelligence & Polish
 
 ### Phase 5: Better Predictions & Enhanced AI Insights
-- [ ] Predictive Fuel Timeline (visual day-by-day bar forecast) [P1]
-- [ ] AI Confidence Score (percentage for mileage predictions) [P1]
-- [ ] Advanced AI Insights (multi-line causes + recommendations) [P1]
-- [ ] AI Timeline (Google Photos style milestones) [P1]
-- [ ] Achievement System (1000 km, Best mileage, Lowest expense, 30-day streak) [P1]
+- [x] Predictive Fuel Timeline (visual day-by-day bar forecast) [P1]
+- [x] AI Confidence Score (percentage for mileage predictions) [P1]
+- [x] Advanced AI Insights (multi-line causes + recommendations) [P1]
+- [x] AI Timeline (Google Photos style milestones) [P1]
+- [x] Achievement System (1000 km, Best mileage, Lowest expense, 30-day streak) [P1]
 
 ### Phase 6: Advanced Analytics & Export
-- [ ] Scatter plot: Petrol price vs cost per km [P2]
-- [ ] Radar chart: Vehicle health metrics [P2]
-- [ ] Sankey diagram: Fuel → Distance → Cost [P2]
-- [ ] Stacked monthly comparison [P2]
-- [ ] AI prediction overlay (actual vs predicted mileage) [P2]
-- [ ] PDF monthly report (dart pdf library) [P1] (8h)
-- [ ] CSV export (trips + fuel entries) [P1] (3h)
-- [ ] Home screen widget (fuel + daily distance) [P1] (6h)
-- [ ] Backup to JSON + restore flow [P1] (5h)
-- [ ] Settings screen — full implementation (edit flows) [P0] (6h)
-- [ ] Accessibility audit (font sizes, contrast) [P2] (3h)
-- [ ] Full app dark mode polish pass [P1] (4h)
-- [ ] Performance profiling (Dart DevTools) [P1] (3h)
+- [x] Scatter plot: Petrol price vs cost per km [P2]
+- [x] Radar chart: Vehicle health metrics [P2]
+- [x] Sankey diagram: Fuel → Distance → Cost [P2]
+- [x] Stacked monthly comparison [P2]
+- [x] AI prediction overlay (actual vs predicted mileage) [P2]
+- [x] PDF monthly report (dart pdf library) [P1] (8h)
+- [x] CSV export (trips + fuel entries) [P1] (3h)
+- [x] Home screen widget (fuel + daily distance) [P1] (6h)
+- [x] Backup to JSON + restore flow [P1] (5h)
+- [x] Settings screen — full implementation (edit flows) [P0] (6h)
+- [x] Accessibility audit (font sizes, contrast) [P2] (3h)
+- [x] Full app dark mode polish pass [P1] (4h)
+- [x] Performance profiling (Dart DevTools) [P1] (3h)
 
 ---
 
 ## Version 2.0 — Conversational AI (Offline LLM)
 
 ### Phase 7: Offline LLM Integration (Week 12–13)
-- [ ] Evaluate flutter_llm_inference vs ONNX Runtime Mobile [P0] (4h)
-- [ ] Integrate chosen inference framework [P0] (6h)
-- [ ] Model download manager (resumable, progress bar) [P0] (5h)
-- [ ] Model cache + delete flow in Settings [P1] (2h)
-- [ ] Context builder — serialize 30-day rider data [P0] (4h)
-- [ ] System prompt engineering for Qwen2.5 [P0] (3h)
+- [x] Evaluate flutter_llm_inference vs ONNX Runtime Mobile [P0] (4h)
+- [x] Integrate chosen inference framework [P0] (6h)
+- [x] Model download manager (resumable, progress bar) [P0] (5h)
+- [x] Model cache + delete flow in Settings [P1] (2h)
+- [x] Context builder — serialize 30-day rider data [P0] (4h)
+- [x] System prompt engineering for Qwen2.5 [P0] (3h)
 
 ### Phase 8: Chat UI & Voice
-- [ ] Full-screen chat overlay with message bubbles [P0] (5h)
-- [ ] AI Assistant with Memory (session context preservation) [P0] (4h)
-- [ ] AI Chat Suggestion chips (Avg Mileage, Fuel Left, Compare Months, etc.) [P1] (3h)
-- [ ] Streaming token output in chat UI [P1] (4h)
-- [ ] Voice queries (speech-to-text integration) [P1] (4h)
-- [ ] Smart summaries generation via LLM [P1] (3h)
-- [ ] Model loading state management (lazy load on open) [P1] (3h)
-- [ ] Inference performance tuning (thread count, etc.) [P1] (3h)
-- [ ] Memory leak audit (esp. LLM inference) [P0] (3h)
-- [ ] Edge case testing (no data, etc.) [P0] (4h)
-- [ ] APK build + signing + install on test device [P0] (2h)
+- [x] Full-screen chat overlay with message bubbles [P0] (5h)
+- [x] AI Assistant with Memory (session context preservation) [P0] (4h)
+- [x] AI Chat Suggestion chips (Avg Mileage, Fuel Left, Compare Months, etc.) [P1] (3h)
+- [x] Streaming token output in chat UI [P1] (4h)
+- [x] Voice queries (speech-to-text integration) [P1] (4h)
+- [x] Smart summaries generation via LLM [P1] (3h)
+- [x] Model loading state management (lazy load on open) [P1] (3h)
+- [x] Inference performance tuning (thread count, etc.) [P1] (3h)
+- [x] Memory leak audit (esp. LLM inference) [P0] (3h)
+- [x] Edge case testing (no data, etc.) [P0] (4h)
+- [x] APK build + signing + install on test device [P0] (2h)
 
 ---
 

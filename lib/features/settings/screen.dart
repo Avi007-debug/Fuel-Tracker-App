@@ -6,6 +6,8 @@ import 'package:fuel_tracker_app/providers/app_providers.dart';
 import 'package:fuel_tracker_app/core/constants/app_constants.dart';
 import 'package:fuel_tracker_app/features/settings/controller.dart';
 import 'package:fuel_tracker_app/models/route_type.dart';
+import 'package:fuel_tracker_app/features/ai_chat/controller.dart';
+import 'package:fuel_tracker_app/core/ai/llm_service.dart';
 
 /// Screen 5 — ⚙️ Settings
 ///
@@ -206,6 +208,7 @@ class SettingsScreen extends ConsumerWidget {
     final vehicleProfileAsync = ref.watch(vehicleProfileProvider);
     final settingsAsync = ref.watch(appSettingsProvider);
     final controller = ref.watch(settingsControllerProvider);
+    final chatState = ref.watch(aiChatProvider);
 
     final profile = vehicleProfileAsync.valueOrNull;
     final settings = settingsAsync.valueOrNull ?? {};
@@ -534,6 +537,47 @@ class SettingsScreen extends ConsumerWidget {
               ),
             ),
 
+            // ── Offline AI Assistant ────────────────────────────
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                child: _SettingsSection(
+                  title: 'Offline AI Assistant',
+                  icon: Icons.auto_awesome,
+                  color: AppTheme.accentPurple,
+                  children: [
+                    _SettingsTile(
+                      icon: Icons.model_training,
+                      title: 'Model Version',
+                      subtitle: AppConstants.llmModelName,
+                      onTap: () {},
+                    ),
+                    _SettingsTile(
+                      icon: Icons.info_outline,
+                      title: 'Status',
+                      subtitle: chatState.llmState == LlmState.ready
+                          ? 'Installed (~398 MB)'
+                          : 'Not Installed (Will copy from assets on first launch)',
+                      onTap: () {},
+                    ),
+                    if (chatState.llmState == LlmState.ready)
+                      _SettingsTile(
+                        icon: Icons.delete_outline,
+                        title: 'Delete Offline Model',
+                        subtitle: 'Clear Qwen model cache to free up storage space',
+                        titleColor: AppTheme.accentRed,
+                        onTap: () async {
+                          await controller.deleteModel();
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Offline model deleted successfully.')),
+                          );
+                        },
+                      ),
+                  ],
+                ),
+              ),
+            ),
+
             // ── Data Management ─────────────────────────────────
             SliverToBoxAdapter(
               child: Padding(
@@ -587,7 +631,7 @@ class SettingsScreen extends ConsumerWidget {
                     _SettingsTile(
                       icon: Icons.info_outline,
                       title: AppConstants.appName,
-                      subtitle: '${AppConstants.appTagline}\nVersion 1.5.0',
+                      subtitle: '${AppConstants.appTagline}\nVersion 2.0.0',
                       onTap: () {},
                     ),
                   ],

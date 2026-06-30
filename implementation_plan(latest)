@@ -1,0 +1,58 @@
+# Playwright E2E Setup & Implementation Plan
+
+This plan outlines the steps required to set up the project locally so it runs properly, followed by installing Playwright and automating the Phase 4 End-to-End, Responsive, and Accessibility tests.
+
+## 🛠️ How to Setup & Run the Project Locally
+
+Before proceeding, ensure you have set up both your backend and frontend. You can run them manually in separate terminals to verify everything works:
+
+**Terminal 1 (Backend):**
+1. Navigate to the backend: `cd backend`
+2. Ensure you have a virtual environment: `python -m venv venv`
+3. Activate it: `.\venv\Scripts\activate` (Windows)
+4. Install requirements: `pip install -r requirements.txt`
+5. Run the server: `python run.py`
+*(The backend runs on http://localhost:8000. It defaults to a local SQLite database, so no external DB setup is required!)*
+
+**Terminal 2 (Frontend):**
+1. Navigate to the frontend: `cd catchupx-v1`
+2. Install dependencies: `npm install`
+3. Run the development server: `npm run dev`
+*(The frontend runs on http://localhost:3000)*
+
+## User Review Required
+> [!IMPORTANT]
+> By approving this plan, I will install Playwright into the `catchupx-v1` directory and automate the remaining tests. 
+> I will configure Playwright to **automatically start both the backend and frontend** for you during the test run, so you won't need to manually start the servers just to run tests!
+
+## Proposed Changes
+
+### Setup and Configuration
+- **Command:** `npm install -D @playwright/test @axe-core/playwright`
+- **Command:** `npx playwright install --with-deps`
+
+#### [NEW] [playwright.config.ts](file:///c:/Coding/CatchupXV1/catchupx-v1/playwright.config.ts)
+- Configure Playwright to test across Chromium, Firefox, and WebKit.
+- Set up a multi-`webServer` configuration to automatically run `python run.py` (Backend) and `npm run dev` (Frontend).
+
+### Phase 4: E2E Tests Implementation
+We will create the following test files inside `catchupx-v1/e2e/`:
+
+#### [NEW] [sms-flows.spec.ts](file:///c:/Coding/CatchupXV1/catchupx-v1/e2e/sms-flows.spec.ts)
+- **Announcement Flow:** Login as teacher, create an announcement, login as student, verify visibility.
+- **Live Classroom Flow:** Login as teacher, start session, start poll. Login as student (in a separate browser context), join session, submit answer, signal confusion. Teacher verifies results and heatmap update.
+- **Report Card Flow:** Create and finalize a report card, verify student can view and download.
+- **Gamification & Leaderboard:** Verify XP stats, badges, and leaderboard filtering.
+- **Exam Predictor:** Verify score predictions, topics, and risk radar rendering.
+
+#### [NEW] [responsive.spec.ts](file:///c:/Coding/CatchupXV1/catchupx-v1/e2e/responsive.spec.ts)
+- Use Playwright's mobile and tablet configurations to test the layouts on 375px and 768px viewports.
+- Verify the navigation menu toggles correctly on mobile.
+
+#### [NEW] [accessibility.spec.ts](file:///c:/Coding/CatchupXV1/catchupx-v1/e2e/accessibility.spec.ts)
+- Integrate `@axe-core/playwright`.
+- Automatically scan the main pages for WCAG violations (e.g., missing ARIA labels, low contrast, focus issues).
+
+## Verification Plan
+- Execute `npx playwright test` after setup.
+- Playwright will start the servers, run through the flows, and generate a final test report.

@@ -18,6 +18,7 @@ import 'package:fuel_tracker_app/services/achievement_service.dart';
 import 'package:fuel_tracker_app/services/milestone_service.dart';
 import 'package:fuel_tracker_app/core/database/backup_service.dart';
 import 'package:fuel_tracker_app/features/settings/controller.dart';
+import 'package:fuel_tracker_app/core/ai/llm_service.dart';
 
 // ─── Service Providers ───────────────────────────────────────────────
 
@@ -54,6 +55,12 @@ final backupServiceProvider = Provider<BackupService>((ref) {
 
 final settingsControllerProvider = Provider<SettingsController>((ref) {
   return SettingsController(ref);
+});
+
+final llmServiceProvider = Provider<LlmService>((ref) {
+  final service = LlmService();
+  ref.onDispose(() => service.dispose());
+  return service;
 });
 
 // ─── Data Providers ──────────────────────────────────────────────────

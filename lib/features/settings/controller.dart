@@ -80,4 +80,9 @@ class SettingsController {
     _ref.invalidate(achievementsProvider);
     _ref.invalidate(milestonesProvider);
   }
+
+  /// Delete the offline LLM model file to free up cache space.
+  Future<void> deleteModel() async {
+    await _ref.read(aiChatProvider.notifier).deleteModel();
+  }
 }
