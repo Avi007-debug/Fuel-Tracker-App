@@ -23,7 +23,7 @@ dependencies:
 
   # Notifications
   flutter_local_notifications: ^18.0.1
-  workmanager: ^0.5.2
+  workmanager: ^0.7.0
   timezone: ^0.9.4
 
   # Networking & Parsing
@@ -55,7 +55,7 @@ dependencies:
 
   # Local LLM & Audio
   llama_cpp_dart: ^0.2.2
-  speech_to_text: ^6.6.1
+  speech_to_text: ^7.4.0
 
 dev_dependencies:
   flutter_test:

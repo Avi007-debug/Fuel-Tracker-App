@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'dart:ui' as ui;
+import 'dart:math' as math;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
@@ -556,12 +558,13 @@ class _LoadingChart extends StatelessWidget {
 }
 
 class _ErrorChart extends StatelessWidget {
-  const _ErrorChart();
+  final String? message;
+  const _ErrorChart({super.key, this.message});
 
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: Text('Error loading chart', style: Theme.of(context).textTheme.bodySmall),
+      child: Text(message ?? 'Error loading chart', style: Theme.of(context).textTheme.bodySmall),
     );
   }
 }
@@ -2438,7 +2441,7 @@ class SankeyPainter extends CustomPainter {
   void _drawText(Canvas canvas, String text, Offset offset, TextStyle style) {
     final textPainter = TextPainter(
       text: TextSpan(text: text, style: style),
-      textDirection: TextDirection.ltr,
+      textDirection: ui.TextDirection.ltr,
     );
     textPainter.layout();
     textPainter.paint(canvas, offset);

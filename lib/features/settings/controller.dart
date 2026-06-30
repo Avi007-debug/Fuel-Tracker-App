@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fuel_tracker_app/providers/app_providers.dart';
+import 'package:fuel_tracker_app/features/ai_chat/controller.dart';
 
 /// Settings controller — handles profile edits, backup/restore, data wipe.
 class SettingsController {

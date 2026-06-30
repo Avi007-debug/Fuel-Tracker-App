@@ -82,7 +82,7 @@ class PdfExporter {
               headers: ['Date', 'Odometer', 'Litres', 'Price/Litre', 'Amount Paid', 'Mileage'],
               data: entries.take(15).map((e) => [
                 DateFormat('dd/MM/yyyy').format(e.timestamp),
-                '${e.odometerKm.toStringAsFixed(0)} km',
+                '${(e.odometerAtFill ?? 0).toStringAsFixed(0)} km',
                 '${e.litresFilled.toStringAsFixed(2)} L',
                 '₹${e.pricePerLitre.toStringAsFixed(2)}',
                 '₹${(e.amountPaid ?? 0).toStringAsFixed(0)}',

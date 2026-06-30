@@ -44,7 +44,7 @@ class CsvExporter {
     ];
     final rows = entries.map((e) => [
       e.timestamp.toIso8601String(),
-      e.odometerKm,
+      e.odometerAtFill,
       e.litresFilled,
       e.pricePerLitre,
       e.amountPaid ?? 0.0,
