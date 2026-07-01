@@ -6,6 +6,7 @@ import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:fuel_tracker_app/app/theme.dart';
 import 'package:fuel_tracker_app/core/ai/llm_service.dart';
 import 'package:fuel_tracker_app/features/ai_chat/controller.dart';
+import 'package:fuel_tracker_app/core/notifications/notification_service.dart';
 
 /// Floating AI Chat screen — styled like ChatGPT, running Qwen2.5 offline.
 class AiChatScreen extends ConsumerStatefulWidget {
@@ -165,6 +166,14 @@ class _AiChatScreenState extends ConsumerState<AiChatScreen> with SingleTickerPr
           ],
         ),
         actions: [
+          IconButton(
+            icon: Icon(Icons.notification_important_outlined, color: Theme.of(context).colorScheme.onSurface.withAlpha(180)),
+            onPressed: () {
+              final isReady = chatState.llmState == LlmState.ready;
+              NotificationService.instance.showModelStatus(isReady);
+            },
+            tooltip: 'Check Model Status',
+          ),
           if (chatState.messages.isNotEmpty)
             IconButton(
               icon: Icon(Icons.delete_sweep_outlined, color: Theme.of(context).colorScheme.onSurface.withAlpha(180)),

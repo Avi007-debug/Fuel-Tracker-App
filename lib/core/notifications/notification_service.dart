@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/timezone.dart' as tz;
-import 'package:timezone/data/latest.dart' as tz;
+import 'package:timezone/data/latest_all.dart' as tz;
 
 /// Notification service — handles all local notifications.
 /// 
@@ -315,6 +315,31 @@ class NotificationService {
   }
 
   // ─── Utility ────────────────────────────────────────────────────
+
+  /// Show a WhatsApp style heads-up notification for model status.
+  Future<void> showModelStatus(bool isAvailable) async {
+    await _notifications.show(
+      999,
+      isAvailable ? '✅ Model Available' : '❌ Model Offline',
+      isAvailable ? 'The offline AI model is loaded and ready to chat.' : 'The offline AI model is currently offline or loading.',
+      const NotificationDetails(
+        android: AndroidNotificationDetails(
+          'model_status',
+          'Model Status',
+          channelDescription: 'Updates about the AI model status',
+          importance: Importance.max,
+          priority: Priority.max,
+          enableVibration: true,
+          playSound: true,
+        ),
+        iOS: DarwinNotificationDetails(
+          presentAlert: true,
+          presentBadge: true,
+          presentSound: true,
+        ),
+      ),
+    );
+  }
 
   /// Cancel all notifications.
   Future<void> cancelAll() async {

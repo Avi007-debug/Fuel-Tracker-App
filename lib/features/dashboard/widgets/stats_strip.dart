@@ -58,6 +58,17 @@ class StatsStrip extends ConsumerWidget {
               error: (_, __) => '0.0 km/L',
             ),
             color: AppTheme.accentOrange,
+            onTap: () {
+              final val = averageMileage.valueOrNull ?? 0.0;
+              if (val <= 0.0) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Not enough fuel logs to calculate average mileage. Please add more fuel entries.'),
+                    duration: Duration(seconds: 3),
+                  ),
+                );
+              }
+            },
           ),
         ],
       ),
@@ -70,17 +81,24 @@ class _StatItem extends StatelessWidget {
   final String label;
   final String value;
   final Color color;
+  final VoidCallback? onTap;
 
   const _StatItem({
     required this.icon,
     required this.label,
     required this.value,
     required this.color,
+    this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Column(
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(AppTheme.radiusSm),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 4.0),
+        child: Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         Icon(icon, color: color, size: 20),
@@ -96,7 +114,9 @@ class _StatItem extends StatelessWidget {
           label,
           style: Theme.of(context).textTheme.labelSmall,
         ),
-      ],
+        ],
+        ),
+      ),
     );
   }
 }

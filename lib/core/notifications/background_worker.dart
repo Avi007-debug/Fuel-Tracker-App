@@ -99,7 +99,7 @@ class BackgroundWorker {
     if (kIsWeb) return;
     await Workmanager().initialize(
       callbackDispatcher,
-      isInDebugMode: kDebugMode,
+      isInDebugMode: false,
     );
   }
 
