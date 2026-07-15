@@ -30,56 +30,89 @@ void callbackDispatcher() {
 
       // ─── 1. Evening Return Trip Escalation ───────────────────────
       // If it's a weekday between 6:00 PM and 10:00 PM
-      final now = DateTime.now();
-      final isWeekday = now.weekday != DateTime.saturday && now.weekday != DateTime.sunday;
-      final isEvening = now.hour >= 18 && now.hour < 22;
+      try {
+        final now = DateTime.now();
+        final isWeekday = now.weekday != DateTime.saturday && now.weekday != DateTime.sunday;
+        final isEvening = now.hour >= 18 && now.hour < 22;
 
-      if (isWeekday && isEvening) {
-        final todayTrips = trips.where((t) => DateHelpers.isToday(t.timestamp)).toList();
-        final hasGo = todayTrips.any((t) => t.routeType == RouteType.collegeGo);
-        final hasReturn = todayTrips.any((t) => t.routeType == RouteType.collegeReturn);
+        if (isWeekday && isEvening) {
+          final todayTrips = trips.where((t) => DateHelpers.isToday(t.timestamp)).toList();
+          final hasGo = todayTrips.any((t) => t.routeType == RouteType.collegeGo);
+          final hasReturn = todayTrips.any((t) => t.routeType == RouteType.collegeReturn);
 
-        if (hasGo && !hasReturn) {
-          dev.log('Evening return trip missing! Alerting user.');
-          await NotificationService.instance.showEveningEscalation();
-        } else {
-          // If return logged or go not logged, ensure notification is cleared/not shown
-          await NotificationService.instance.cancelEveningEscalation();
+          if (hasGo && !hasReturn) {
+            dev.log('Evening return trip missing! Alerting user.');
+            await NotificationService.instance.showEveningEscalation();
+          } else {
+            // If return logged or go not logged, ensure notification is cleared/not shown
+            await NotificationService.instance.cancelEveningEscalation();
+          }
         }
+      } catch (e, stackTrace) {
+        dev.log('Error in evening reminder check: $e', error: e, stackTrace: stackTrace);
+        try {
+          await NotificationService.instance.showFallbackNotification(
+            title: '🏠 Return Trip Reminder',
+            body: 'Don\'t forget to log your return trip today!',
+            id: 901,
+          );
+        } catch (_) {}
       }
 
       // ─── 2. Low Fuel Alert Check ──────────────────────────────────
-      if (fuelEntries.isNotEmpty && vehicle != null) {
-        final fuelRemaining = await fuelService.getEstimatedFuelRemaining();
-        final rangeRemaining = await fuelService.getEstimatedRange();
+      try {
+        if (fuelEntries.isNotEmpty && vehicle != null) {
+          final fuelRemaining = await fuelService.getEstimatedFuelRemaining();
+          final rangeRemaining = await fuelService.getEstimatedRange();
 
-        if (FuelEstimator.isLowFuel(estimatedRangeKm: rangeRemaining)) {
-          dev.log('Low fuel alert range remaining: $rangeRemaining km');
-          await NotificationService.instance.showLowFuelAlert(rangeRemaining);
-        } else {
-          await NotificationService.instance.cancelLowFuelAlert();
+          if (FuelEstimator.isLowFuel(estimatedRangeKm: rangeRemaining)) {
+            dev.log('Low fuel alert range remaining: $rangeRemaining km');
+            await NotificationService.instance.showLowFuelAlert(rangeRemaining);
+          } else {
+            await NotificationService.instance.cancelLowFuelAlert();
+          }
         }
+      } catch (e, stackTrace) {
+        dev.log('Error in low fuel check: $e', error: e, stackTrace: stackTrace);
+        try {
+          await NotificationService.instance.showFallbackNotification(
+            title: '⛽ Fuel Check',
+            body: 'Check your fuel level — it may be getting low.',
+            id: 902,
+          );
+        } catch (_) {}
       }
 
       // ─── 3. Service Alerts Check ──────────────────────────────────
-      if (vehicle != null) {
-        // Calculate current odometer: initial odometer + total trips distance
-        final totalDistance = trips.fold<double>(0.0, (sum, t) => sum + t.distanceKm);
-        final currentOdometer = (vehicle.initialOdometer ?? 0.0) + totalDistance;
+      try {
+        if (vehicle != null) {
+          // Calculate current odometer: initial odometer + total trips distance
+          final totalDistance = trips.fold<double>(0.0, (sum, t) => sum + t.distanceKm);
+          final currentOdometer = (vehicle.initialOdometer ?? 0.0) + totalDistance;
 
-        final dueServices = ServiceEngine.checkServicesDue(
-          records: serviceRecords,
-          currentOdometerKm: currentOdometer,
-          vehicle: vehicle,
-        );
-
-        for (final service in dueServices) {
-          dev.log('Service due: ${service.type.label}, remaining: ${service.kmRemaining} km');
-          await NotificationService.instance.showServiceAlert(
-            serviceType: service.type.label,
-            kmRemaining: service.kmRemaining,
+          final dueServices = ServiceEngine.checkServicesDue(
+            records: serviceRecords,
+            currentOdometerKm: currentOdometer,
+            vehicle: vehicle,
           );
+
+          for (final service in dueServices) {
+            dev.log('Service due: ${service.type.label}, remaining: ${service.kmRemaining} km');
+            await NotificationService.instance.showServiceAlert(
+              serviceType: service.type.label,
+              kmRemaining: service.kmRemaining,
+            );
+          }
         }
+      } catch (e, stackTrace) {
+        dev.log('Error in service alerts check: $e', error: e, stackTrace: stackTrace);
+        try {
+          await NotificationService.instance.showFallbackNotification(
+            title: '🔧 Service Reminder',
+            body: 'Check if any vehicle services are due.',
+            id: 903,
+          );
+        } catch (_) {}
       }
 
       return true;

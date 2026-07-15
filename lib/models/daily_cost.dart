@@ -26,6 +26,8 @@ class DailyCost {
   final CommuteType type;
   final double baseCost;
   final double parkingFee;
+  final double extraCost;
+  final String? extraCostNote;
   final double totalCost;
 
   const DailyCost({
@@ -34,6 +36,8 @@ class DailyCost {
     required this.type,
     this.baseCost = 0.0,
     this.parkingFee = 0.0,
+    this.extraCost = 0.0,
+    this.extraCostNote,
     this.totalCost = 0.0,
   });
 
@@ -42,6 +46,8 @@ class DailyCost {
     required CommuteType type,
     double baseCost = 0.0,
     double parkingFee = 0.0,
+    double extraCost = 0.0,
+    String? extraCostNote,
   }) {
     return DailyCost(
       id: const Uuid().v4(),
@@ -49,7 +55,9 @@ class DailyCost {
       type: type,
       baseCost: baseCost,
       parkingFee: parkingFee,
-      totalCost: baseCost + parkingFee,
+      extraCost: extraCost,
+      extraCostNote: extraCostNote,
+      totalCost: baseCost + parkingFee + extraCost,
     );
   }
 
@@ -59,6 +67,8 @@ class DailyCost {
     CommuteType? type,
     double? baseCost,
     double? parkingFee,
+    double? extraCost,
+    String? extraCostNote,
     double? totalCost,
   }) {
     return DailyCost(
@@ -67,6 +77,8 @@ class DailyCost {
       type: type ?? this.type,
       baseCost: baseCost ?? this.baseCost,
       parkingFee: parkingFee ?? this.parkingFee,
+      extraCost: extraCost ?? this.extraCost,
+      extraCostNote: extraCostNote ?? this.extraCostNote,
       totalCost: totalCost ?? this.totalCost,
     );
   }
@@ -77,6 +89,8 @@ class DailyCost {
         'type': type.name,
         'baseCost': baseCost,
         'parkingFee': parkingFee,
+        'extraCost': extraCost,
+        'extraCostNote': extraCostNote,
         'totalCost': totalCost,
       };
 
@@ -90,6 +104,8 @@ class DailyCost {
       ),
       baseCost: (json['baseCost'] as num?)?.toDouble() ?? 0.0,
       parkingFee: (json['parkingFee'] as num?)?.toDouble() ?? 0.0,
+      extraCost: (json['extraCost'] as num?)?.toDouble() ?? 0.0,
+      extraCostNote: json['extraCostNote'] as String?,
       totalCost: (json['totalCost'] as num?)?.toDouble() ?? 0.0,
     );
   }

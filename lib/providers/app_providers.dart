@@ -104,6 +104,11 @@ final allTripsProvider = FutureProvider<List<Trip>>((ref) async {
   return ref.read(tripServiceProvider).getAllTrips();
 });
 
+/// Trashed trips.
+final trashTripsProvider = FutureProvider<List<Map<String, dynamic>>>((ref) async {
+  return ref.read(tripServiceProvider).getTrashedTrips();
+});
+
 /// Today's trips only.
 final todayTripsProvider = FutureProvider<List<Trip>>((ref) async {
   return ref.read(tripServiceProvider).getTodayTrips();

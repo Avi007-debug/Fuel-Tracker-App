@@ -341,6 +341,30 @@ class NotificationService {
     );
   }
 
+  /// Show a fallback notification with default content.
+  /// Used when the main notification logic fails.
+  Future<void> showFallbackNotification({
+    required String title,
+    required String body,
+    int id = 900,
+  }) async {
+    await _notifications.show(
+      id,
+      title,
+      body,
+      const NotificationDetails(
+        android: AndroidNotificationDetails(
+          _channelIdAlerts,
+          _channelNameAlerts,
+          channelDescription: _channelDescAlerts,
+          importance: Importance.high,
+          priority: Priority.high,
+        ),
+        iOS: DarwinNotificationDetails(),
+      ),
+    );
+  }
+
   /// Cancel all notifications.
   Future<void> cancelAll() async {
     await _notifications.cancelAll();

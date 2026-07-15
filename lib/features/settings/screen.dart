@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 
 import 'package:fuel_tracker_app/app/theme.dart';
 import 'package:fuel_tracker_app/providers/app_providers.dart';
 import 'package:fuel_tracker_app/core/constants/app_constants.dart';
 import 'package:fuel_tracker_app/features/settings/controller.dart';
 import 'package:fuel_tracker_app/models/route_type.dart';
+import 'package:fuel_tracker_app/models/trip.dart';
 import 'package:fuel_tracker_app/features/ai_chat/controller.dart';
 import 'package:fuel_tracker_app/core/ai/llm_service.dart';
+import 'package:fuel_tracker_app/features/dashboard/widgets/quick_actions.dart';
 
 /// Screen 5 — ⚙️ Settings
 ///
@@ -199,6 +202,165 @@ class SettingsScreen extends ConsumerWidget {
             child: const Text('DELETE ALL', style: TextStyle(color: AppTheme.accentRed)),
           ),
         ],
+      ),
+    );
+  }
+
+  void _showTrashBinSheet(BuildContext context, WidgetRef ref) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) => Consumer(
+        builder: (ctx, ref, _) {
+          final trashAsync = ref.watch(trashTripsProvider);
+
+          return Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Trash Bin',
+                      style: Theme.of(ctx).textTheme.headlineMedium,
+                    ),
+                    const Icon(Icons.delete_sweep, color: AppTheme.textSecondary),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Trips deleted will remain here for 15 days before permanent cleanup.',
+                  style: Theme.of(ctx).textTheme.bodySmall?.copyWith(color: AppTheme.textMuted),
+                ),
+                const SizedBox(height: 16),
+                ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxHeight: MediaQuery.of(ctx).size.height * 0.5,
+                  ),
+                  child: trashAsync.when(
+                    data: (trashList) {
+                      if (trashList.isEmpty) {
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 32),
+                          child: Center(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.delete_outline, size: 48, color: AppTheme.textMuted.withAlpha(80)),
+                                const SizedBox(height: 12),
+                                Text(
+                                  'Trash is empty',
+                                  style: Theme.of(ctx).textTheme.bodyMedium?.copyWith(color: AppTheme.textMuted),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      }
+
+                      return ListView.separated(
+                        shrinkWrap: true,
+                        itemCount: trashList.length,
+                        separatorBuilder: (_, __) => const Divider(height: 1),
+                        itemBuilder: (ctx, idx) {
+                          final item = trashList[idx];
+                          final deletedAtStr = item['deletedAt'] as String;
+                          final tripJson = item['trip'] as Map<String, dynamic>;
+                          final trip = Trip.fromJson(tripJson);
+                          final deletedAt = DateTime.parse(deletedAtStr);
+                          final expiryDate = deletedAt.add(const Duration(days: 15));
+                          final daysLeft = expiryDate.difference(DateTime.now()).inDays;
+                          final daysLeftText = daysLeft <= 0 ? 'Expiring today' : '$daysLeft days left';
+
+                          return ListTile(
+                            contentPadding: EdgeInsets.zero,
+                            title: Text('${trip.routeType.label} (${trip.distanceKm} km)'),
+                            subtitle: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Logged: ${DateFormat('MMM d, yyyy').format(trip.timestamp)}',
+                                  style: Theme.of(ctx).textTheme.bodySmall,
+                                ),
+                                Text(
+                                  'Deleted: ${DateFormat('MMM d, yyyy').format(deletedAt)} ($daysLeftText)',
+                                  style: Theme.of(ctx).textTheme.bodySmall?.copyWith(color: AppTheme.accentOrange),
+                                ),
+                              ],
+                            ),
+                            trailing: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                IconButton(
+                                  icon: const Icon(Icons.restore, color: AppTheme.accentGreen),
+                                  tooltip: 'Restore Trip',
+                                  onPressed: () async {
+                                    await ref.read(tripServiceProvider).restoreTrip(trip.id);
+                                    ref.invalidate(allTripsProvider);
+                                    ref.invalidate(todayTripsProvider);
+                                    ref.invalidate(todayDistanceProvider);
+                                    ref.invalidate(trashTripsProvider);
+                                    if (context.mounted) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(content: Text('Trip restored successfully')),
+                                      );
+                                    }
+                                  },
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.delete_forever, color: AppTheme.accentRed),
+                                  tooltip: 'Delete Permanently',
+                                  onPressed: () async {
+                                    final confirm = await showDialog<bool>(
+                                      context: ctx,
+                                      builder: (c) => AlertDialog(
+                                        title: const Text('Delete Permanently?'),
+                                        content: const Text('This action cannot be undone.'),
+                                        actions: [
+                                          TextButton(
+                                            onPressed: () => Navigator.pop(c, false),
+                                            child: const Text('Cancel'),
+                                          ),
+                                          TextButton(
+                                            onPressed: () => Navigator.pop(c, true),
+                                            child: const Text('Delete', style: TextStyle(color: AppTheme.accentRed)),
+                                          ),
+                                        ],
+                                      ),
+                                    );
+
+                                    if (confirm == true) {
+                                      await ref.read(tripServiceProvider).deleteTripPermanently(trip.id);
+                                      ref.invalidate(trashTripsProvider);
+                                      if (context.mounted) {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          const SnackBar(content: Text('Trip permanently deleted')),
+                                        );
+                                      }
+                                    }
+                                  },
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                      );
+                    },
+                    loading: () => const Center(child: CircularProgressIndicator()),
+                    error: (err, _) => Text('Error loading trash: $err'),
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
       ),
     );
   }
@@ -587,6 +749,18 @@ class SettingsScreen extends ConsumerWidget {
                   icon: Icons.storage_outlined,
                   color: AppTheme.accentTeal,
                   children: [
+                    _SettingsTile(
+                      icon: Icons.local_gas_station_outlined,
+                      title: 'Log Missed Fuel Entry',
+                      subtitle: 'Add fuel filled on a past date',
+                      onTap: () => QuickActions.showFuelSheet(context, ref),
+                    ),
+                    _SettingsTile(
+                      icon: Icons.delete_sweep_outlined,
+                      title: 'Trash Bin',
+                      subtitle: 'Recover deleted trips within 15 days',
+                      onTap: () => _showTrashBinSheet(context, ref),
+                    ),
                     _SettingsTile(
                       icon: Icons.backup_outlined,
                       title: 'Backup',

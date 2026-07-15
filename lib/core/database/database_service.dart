@@ -39,6 +39,10 @@ class DatabaseService {
       service._dataDir.createSync(recursive: true);
     }
     _instance = service;
+
+    // Clean expired trash on startup
+    await service.cleanExpiredTrash();
+
     return service;
   }
 
@@ -112,6 +116,62 @@ class DatabaseService {
     final list = await _readList('trips');
     list.removeWhere((e) => e['id'] == id);
     await _writeList('trips', list);
+  }
+
+  // ─── Trash Trips ──────────────────────────────────────────────────
+
+  Future<List<Map<String, dynamic>>> getTrashTrips() async {
+    return _readList('trash_trips');
+  }
+
+  Future<void> trashTrip(Trip trip) async {
+    // 1. Remove from trips list
+    final trips = await _readList('trips');
+    trips.removeWhere((e) => e['id'] == trip.id);
+    await _writeList('trips', trips);
+
+    // 2. Add to trash list with deletedAt
+    final trash = await _readList('trash_trips');
+    trash.add({
+      'deletedAt': DateTime.now().toIso8601String(),
+      'trip': trip.toJson(),
+    });
+    await _writeList('trash_trips', trash);
+  }
+
+  Future<void> restoreTrip(String id) async {
+    final trash = await _readList('trash_trips');
+    final idx = trash.indexWhere((e) => e['trip']['id'] == id);
+    if (idx != -1) {
+      final tripJson = trash[idx]['trip'];
+      trash.removeAt(idx);
+      await _writeList('trash_trips', trash);
+
+      final trips = await _readList('trips');
+      trips.add(tripJson);
+      await _writeList('trips', trips);
+    }
+  }
+
+  Future<void> permanentlyDeleteTrip(String id) async {
+    final trash = await _readList('trash_trips');
+    trash.removeWhere((e) => e['trip']['id'] == id);
+    await _writeList('trash_trips', trash);
+  }
+
+  Future<void> cleanExpiredTrash() async {
+    final trash = await _readList('trash_trips');
+    final now = DateTime.now();
+    final fifteenDaysAgo = now.subtract(const Duration(days: 15));
+    trash.removeWhere((item) {
+      try {
+        final deletedAt = DateTime.parse(item['deletedAt'] as String);
+        return deletedAt.isBefore(fifteenDaysAgo);
+      } catch (_) {
+        return false;
+      }
+    });
+    await _writeList('trash_trips', trash);
   }
 
   // ─── Fuel Entries ──────────────────────────────────────────────────

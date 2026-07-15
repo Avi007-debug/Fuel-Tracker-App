@@ -24,11 +24,11 @@ class TripService {
   }
 
   /// Log a quick-action trip (fixed route).
-  Future<Trip> logTrip(RouteType routeType, {String? notes}) async {
+  Future<Trip> logTrip(RouteType routeType, {String? notes, DateTime? timestamp}) async {
     final distance = await getRouteDistance(routeType);
     final trip = Trip(
       id: _uuid.v4(),
-      timestamp: DateTime.now(),
+      timestamp: timestamp ?? DateTime.now(),
       routeType: routeType,
       distanceKm: distance,
       notes: notes,
@@ -38,10 +38,10 @@ class TripService {
   }
 
   /// Log a custom ride with manual distance.
-  Future<Trip> logCustomTrip(double distanceKm, {String? notes}) async {
+  Future<Trip> logCustomTrip(double distanceKm, {String? notes, DateTime? timestamp}) async {
     final trip = Trip(
       id: _uuid.v4(),
-      timestamp: DateTime.now(),
+      timestamp: timestamp ?? DateTime.now(),
       routeType: RouteType.custom,
       distanceKm: distanceKm,
       notes: notes,
@@ -143,8 +143,21 @@ class TripService {
   /// Update an existing trip.
   Future<void> updateTrip(Trip trip) => _db.updateTrip(trip);
 
-  /// Delete a trip.
-  Future<void> deleteTrip(String id) => _db.deleteTrip(id);
+  /// Move a trip to trash.
+  Future<void> deleteTrip(String id) async {
+    final all = await _db.getAllTrips();
+    final trip = all.firstWhere((t) => t.id == id);
+    await _db.trashTrip(trip);
+  }
+
+  /// Get all trashed trips.
+  Future<List<Map<String, dynamic>>> getTrashedTrips() => _db.getTrashTrips();
+
+  /// Restore a trip from trash.
+  Future<void> restoreTrip(String id) => _db.restoreTrip(id);
+
+  /// Permanently delete a trip from trash.
+  Future<void> deleteTripPermanently(String id) => _db.permanentlyDeleteTrip(id);
 
   /// Undo (delete) the most recent trip.
   Future<void> undoLastTrip() async {

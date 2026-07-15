@@ -281,10 +281,31 @@ class _TripTile extends ConsumerWidget {
         child: const Icon(Icons.delete_outline, color: AppTheme.accentRed),
       ),
       onDismissed: (_) async {
+        final deletedTrip = trip;
         await ref.read(tripServiceProvider).deleteTrip(trip.id);
         ref.invalidate(allTripsProvider);
         ref.invalidate(todayTripsProvider);
         ref.invalidate(todayDistanceProvider);
+        ref.invalidate(trashTripsProvider);
+
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).clearSnackBars();
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text('Trip moved to Trash (15 days recovery)'),
+              action: SnackBarAction(
+                label: 'UNDO',
+                onPressed: () async {
+                  await ref.read(tripServiceProvider).restoreTrip(deletedTrip.id);
+                  ref.invalidate(allTripsProvider);
+                  ref.invalidate(todayTripsProvider);
+                  ref.invalidate(todayDistanceProvider);
+                  ref.invalidate(trashTripsProvider);
+                },
+              ),
+            ),
+          );
+        }
       },
       child: Container(
         padding: const EdgeInsets.all(14),

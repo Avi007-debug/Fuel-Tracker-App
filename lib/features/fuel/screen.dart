@@ -371,93 +371,143 @@ class _StatCard extends StatelessWidget {
   }
 }
 
-class _FuelTile extends StatelessWidget {
+class _FuelTile extends ConsumerWidget {
   final FuelEntry entry;
   const _FuelTile({required this.entry});
 
   @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Theme.of(context).cardTheme.color,
-        borderRadius: BorderRadius.circular(AppTheme.radiusMd),
-        border: Border.all(color: Theme.of(context).colorScheme.outline),
+  Widget build(BuildContext context, WidgetRef ref) {
+    return Dismissible(
+      key: ValueKey(entry.id),
+      direction: DismissDirection.endToStart,
+      background: Container(
+        alignment: Alignment.centerRight,
+        padding: const EdgeInsets.only(right: 20),
+        decoration: BoxDecoration(
+          color: AppTheme.accentRed.withAlpha(30),
+          borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+        ),
+        child: const Icon(Icons.delete_outline, color: AppTheme.accentRed),
       ),
-      child: Row(
-        children: [
-          // Icon
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: AppTheme.accentOrange.withAlpha(20),
-              borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+      confirmDismiss: (_) async {
+        return true;
+      },
+      onDismissed: (_) async {
+        // Store entry data for undo
+        final deletedEntry = entry;
+
+        await ref.read(databaseServiceProvider).deleteFuelEntry(entry.id);
+        ref.invalidate(allFuelEntriesProvider);
+        ref.invalidate(fuelRemainingProvider);
+        ref.invalidate(estimatedRangeProvider);
+        ref.invalidate(monthSpendProvider);
+        ref.invalidate(averageMileageProvider);
+
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).clearSnackBars();
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Fuel entry deleted (${Formatters.currency(deletedEntry.amountPaid ?? 0)})',
+              ),
+              duration: const Duration(seconds: 4),
+              action: SnackBarAction(
+                label: 'UNDO',
+                onPressed: () async {
+                  await ref.read(databaseServiceProvider).addFuelEntry(deletedEntry);
+                  ref.invalidate(allFuelEntriesProvider);
+                  ref.invalidate(fuelRemainingProvider);
+                  ref.invalidate(estimatedRangeProvider);
+                  ref.invalidate(monthSpendProvider);
+                  ref.invalidate(averageMileageProvider);
+                },
+              ),
             ),
-            child: const Icon(Icons.local_gas_station,
-                color: AppTheme.accentOrange, size: 20),
-          ),
-          const SizedBox(width: 12),
-          // Info
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          );
+        }
+      },
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: Theme.of(context).cardTheme.color,
+          borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+          border: Border.all(color: Theme.of(context).colorScheme.outline),
+        ),
+        child: Row(
+          children: [
+            // Icon
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: AppTheme.accentOrange.withAlpha(20),
+                borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+              ),
+              child: const Icon(Icons.local_gas_station,
+                  color: AppTheme.accentOrange, size: 20),
+            ),
+            const SizedBox(width: 12),
+            // Info
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '${Formatters.litres(entry.litresFilled)} @ ₹${Formatters.decimal1(entry.pricePerLitre)}/L',
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    Formatters.dateTime(entry.timestamp),
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                  if (entry.calculatedMileage > 0)
+                    Text(
+                      'Mileage: ${Formatters.mileage(entry.calculatedMileage)}',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: AppTheme.accentGreen,
+                          ),
+                    ),
+                ],
+              ),
+            ),
+            // Amount
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Text(
-                  '${Formatters.litres(entry.litresFilled)} @ ₹${Formatters.decimal1(entry.pricePerLitre)}/L',
-                  style: Theme.of(context).textTheme.titleMedium,
+                  entry.amountPaid != null
+                      ? Formatters.currency(entry.amountPaid!)
+                      : '—',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        color: AppTheme.accentOrange,
+                        fontWeight: FontWeight.w700,
+                      ),
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  Formatters.dateTime(entry.timestamp),
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
-                if (entry.calculatedMileage > 0)
-                  Text(
-                    'Mileage: ${Formatters.mileage(entry.calculatedMileage)}',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: AppTheme.accentGreen,
-                        ),
+                if (entry.isTankFull)
+                  Container(
+                    margin: const EdgeInsets.only(top: 4),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: AppTheme.accentGreen.withAlpha(20),
+                      borderRadius:
+                          BorderRadius.circular(AppTheme.radiusSm),
+                    ),
+                    child: Text(
+                      'FULL',
+                      style:
+                          Theme.of(context).textTheme.labelSmall?.copyWith(
+                                color: AppTheme.accentGreen,
+                                fontSize: 8,
+                                fontWeight: FontWeight.w700,
+                              ),
+                    ),
                   ),
               ],
             ),
-          ),
-          // Amount
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(
-                entry.amountPaid != null
-                    ? Formatters.currency(entry.amountPaid!)
-                    : '—',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: AppTheme.accentOrange,
-                      fontWeight: FontWeight.w700,
-                    ),
-              ),
-              if (entry.isTankFull)
-                Container(
-                  margin: const EdgeInsets.only(top: 4),
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 6, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: AppTheme.accentGreen.withAlpha(20),
-                    borderRadius:
-                        BorderRadius.circular(AppTheme.radiusSm),
-                  ),
-                  child: Text(
-                    'FULL',
-                    style:
-                        Theme.of(context).textTheme.labelSmall?.copyWith(
-                              color: AppTheme.accentGreen,
-                              fontSize: 8,
-                              fontWeight: FontWeight.w700,
-                            ),
-                  ),
-                ),
-            ],
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

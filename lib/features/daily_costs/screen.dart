@@ -16,16 +16,23 @@ class DailyCostsScreen extends ConsumerStatefulWidget {
 class _DailyCostsScreenState extends ConsumerState<DailyCostsScreen> {
   CommuteType _selectedType = CommuteType.metro;
   bool _addParking = false;
+  final _extraCostController = TextEditingController();
+  final _extraCostNoteController = TextEditingController();
 
   void _logCommute() async {
     double baseCost = _selectedType == CommuteType.metro ? 166.0 : 114.0;
     double parking = _addParking ? 30.0 : 0.0;
+    double extra = double.tryParse(_extraCostController.text.trim()) ?? 0.0;
+    String? extraNote = _extraCostNoteController.text.trim();
+    if (extraNote != null && extraNote.isEmpty) extraNote = null;
 
     final cost = DailyCost.create(
       timestamp: DateTime.now(),
       type: _selectedType,
       baseCost: baseCost,
       parkingFee: parking,
+      extraCost: extra,
+      extraCostNote: extraNote,
     );
 
     await ref.read(dailyCostServiceProvider).addDailyCost(cost);
@@ -34,6 +41,10 @@ class _DailyCostsScreenState extends ConsumerState<DailyCostsScreen> {
     ref.invalidate(allDailyCostsProvider);
     ref.invalidate(weeklyDailyCostProvider);
     ref.invalidate(monthlyDailyCostProvider);
+
+    // Clear the extra cost fields
+    _extraCostController.clear();
+    _extraCostNoteController.clear();
     
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -148,6 +159,25 @@ class _DailyCostsScreenState extends ConsumerState<DailyCostsScreen> {
                           contentPadding: EdgeInsets.zero,
                         ),
                         const SizedBox(height: AppTheme.spacingMd),
+                        TextField(
+                          controller: _extraCostController,
+                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                          decoration: const InputDecoration(
+                            labelText: 'Extra Cost (₹)',
+                            prefixIcon: Icon(Icons.add_circle_outline),
+                            hintText: 'e.g. auto, food, etc.',
+                          ),
+                        ),
+                        const SizedBox(height: AppTheme.spacingSm),
+                        TextField(
+                          controller: _extraCostNoteController,
+                          decoration: const InputDecoration(
+                            labelText: 'Extra Cost Note (optional)',
+                            prefixIcon: Icon(Icons.note_alt_outlined),
+                            hintText: 'e.g. Auto to metro',
+                          ),
+                        ),
+                        const SizedBox(height: AppTheme.spacingMd),
                         ElevatedButton(
                           onPressed: _logCommute,
                           style: ElevatedButton.styleFrom(
@@ -212,7 +242,20 @@ class _DailyCostsScreenState extends ConsumerState<DailyCostsScreen> {
                           ),
                         ),
                         title: Text('${item.type.label} Commute'),
-                        subtitle: Text(DateFormat('MMM d, yyyy - HH:mm').format(item.timestamp)),
+                        subtitle: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(DateFormat('MMM d, yyyy - HH:mm').format(item.timestamp)),
+                            if (item.extraCost > 0)
+                              Text(
+                                'Extra: ₹${item.extraCost.toStringAsFixed(0)}${item.extraCostNote != null ? ' (${item.extraCostNote})' : ''}',
+                                style: TextStyle(
+                                  color: AppTheme.accentOrange,
+                                  fontSize: 12,
+                                ),
+                              ),
+                          ],
+                        ),
                         trailing: Text(
                           '₹${item.totalCost.toStringAsFixed(0)}',
                           style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),

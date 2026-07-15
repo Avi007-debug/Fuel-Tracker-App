@@ -9,6 +9,9 @@ import 'package:fuel_tracker_app/models/route_type.dart';
 import 'package:fuel_tracker_app/providers/app_providers.dart';
 import 'package:fuel_tracker_app/core/fuel_price/fuel_price_service.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:intl/intl.dart';
+import 'package:uuid/uuid.dart';
+import 'package:fuel_tracker_app/models/trip.dart';
 
 /// Quick-action grid matching the plan's 6 primary actions:
 /// 🟢 Going to College, 🔵 Returned Home, 🟡 Fuel Filled,
@@ -139,7 +142,7 @@ class QuickActions extends ConsumerWidget {
     );
   }
 
-  void _showFuelSheet(BuildContext context, WidgetRef ref) {
+  static void showFuelSheet(BuildContext context, WidgetRef ref) {
     final amountController = TextEditingController();
     final litresController = TextEditingController();
     final priceController = TextEditingController();
@@ -150,6 +153,7 @@ class QuickActions extends ConsumerWidget {
     bool _fetchStarted = false;
     String? receiptPhotoPath;
     double? livePrice;
+    DateTime selectedDate = DateTime.now();
 
     showModalBottomSheet(
       context: context,
@@ -223,6 +227,44 @@ class QuickActions extends ConsumerWidget {
                     ),
                   ),
                 ],
+              ),
+              const SizedBox(height: 16),
+              // Date Picker
+              InkWell(
+                onTap: () async {
+                  final picked = await showDatePicker(
+                    context: context,
+                    initialDate: selectedDate,
+                    firstDate: DateTime(2020),
+                    lastDate: DateTime.now(),
+                  );
+                  if (picked != null) {
+                    setState(() => selectedDate = picked);
+                  }
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                  decoration: BoxDecoration(
+                    color: Theme.of(ctx).colorScheme.surfaceContainerHighest,
+                    borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          const Icon(Icons.calendar_today, size: 20),
+                          const SizedBox(width: 12),
+                          Text(
+                            'Date: ${DateFormat('MMM d, yyyy').format(selectedDate)}',
+                            style: Theme.of(ctx).textTheme.titleMedium,
+                          ),
+                        ],
+                      ),
+                      const Icon(Icons.edit, size: 16),
+                    ],
+                  ),
+                ),
               ),
               const SizedBox(height: 16),
               // Amount or Litres field
@@ -318,59 +360,79 @@ class QuickActions extends ConsumerWidget {
                 height: 48,
                 child: FilledButton.icon(
                   onPressed: () async {
-                    final price =
-                        double.tryParse(priceController.text.trim());
+                    try {
+                      final price =
+                          double.tryParse(priceController.text.trim());
 
-                    if (price == null || price <= 0) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Enter valid price per litre')),
-                      );
-                      return;
-                    }
+                      if (price == null || price <= 0) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Enter valid price per litre')),
+                        );
+                        return;
+                      }
 
-                    // Save manual price if user edited it
-                    if (!hasFetchedPrice || priceController.text != livePrice?.toStringAsFixed(2)) {
-                      await FuelPriceService.saveManualPrice(price);
-                    }
+                      // Save manual price if user edited it
+                      if (!hasFetchedPrice || priceController.text != livePrice?.toStringAsFixed(2)) {
+                        await FuelPriceService.saveManualPrice(price);
+                      }
 
-                    if (!isLitresMode) {
-                      final amount =
-                          double.tryParse(amountController.text.trim());
-                      if (amount == null || amount <= 0) return;
-
-                      await ref.read(fuelServiceProvider).addFuelByAmount(
-                            amountPaid: amount,
-                            pricePerLitre: price,
-                            isTankFull: isTankFull,
-                            receiptPhotoPath: receiptPhotoPath,
+                      if (!isLitresMode) {
+                        final amount =
+                            double.tryParse(amountController.text.trim());
+                        if (amount == null || amount <= 0) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Please enter a valid amount paid')),
                           );
-                    } else {
-                      final litres =
-                          double.tryParse(litresController.text.trim());
-                      if (litres == null || litres <= 0) return;
+                          return;
+                        }
 
-                      await ref.read(fuelServiceProvider).addFuelByLitres(
-                            litresFilled: litres,
-                            pricePerLitre: price,
-                            isTankFull: isTankFull,
-                            receiptPhotoPath: receiptPhotoPath,
+                        await ref.read(fuelServiceProvider).addFuelByAmount(
+                              amountPaid: amount,
+                              pricePerLitre: price,
+                              isTankFull: isTankFull,
+                              receiptPhotoPath: receiptPhotoPath,
+                              timestamp: selectedDate,
+                            );
+                      } else {
+                        final litres =
+                            double.tryParse(litresController.text.trim());
+                        if (litres == null || litres <= 0) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Please enter valid litres filled')),
                           );
-                    }
+                          return;
+                        }
 
-                    ref.invalidate(allFuelEntriesProvider);
-                    ref.invalidate(fuelRemainingProvider);
-                    ref.invalidate(estimatedRangeProvider);
-                    ref.invalidate(monthSpendProvider);
-                    ref.invalidate(averageMileageProvider);
-                    ref.invalidate(mileageConfidenceProvider);
+                        await ref.read(fuelServiceProvider).addFuelByLitres(
+                              litresFilled: litres,
+                              pricePerLitre: price,
+                              isTankFull: isTankFull,
+                              receiptPhotoPath: receiptPhotoPath,
+                              timestamp: selectedDate,
+                            );
+                      }
 
-                    if (ctx.mounted) Navigator.pop(ctx);
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Fuel entry logged'),
-                        ),
-                      );
+                      ref.invalidate(allFuelEntriesProvider);
+                      ref.invalidate(fuelRemainingProvider);
+                      ref.invalidate(estimatedRangeProvider);
+                      ref.invalidate(monthSpendProvider);
+                      ref.invalidate(averageMileageProvider);
+                      ref.invalidate(mileageConfidenceProvider);
+
+                      if (ctx.mounted) Navigator.pop(ctx);
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Fuel entry logged successfully'),
+                          ),
+                        );
+                      }
+                    } catch (e) {
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Error logging fuel: $e')),
+                        );
+                      }
                     }
                   },
                   icon: const Icon(Icons.local_gas_station),
@@ -383,7 +445,183 @@ class QuickActions extends ConsumerWidget {
       },
     ),
   );
-}
+  }
+  
+  void _showMissedEntrySheet(BuildContext context, WidgetRef ref) {
+    DateTime selectedDate = DateTime.now().subtract(const Duration(days: 1));
+    RouteType selectedRoute = RouteType.collegeGo;
+    final distanceController = TextEditingController();
+    final notesController = TextEditingController();
+
+    // Init distance based on route type
+    ref.read(tripServiceProvider).getRouteDistance(selectedRoute).then((val) {
+      if (distanceController.text.isEmpty) {
+        distanceController.text = val.toString();
+      }
+    });
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setState) => Padding(
+          padding: EdgeInsets.fromLTRB(
+            24,
+            24,
+            24,
+            MediaQuery.of(ctx).viewInsets.bottom + 24,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Add Missed Entry',
+                style: Theme.of(ctx).textTheme.headlineMedium,
+              ),
+              const SizedBox(height: 16),
+              
+              // Date Picker
+              InkWell(
+                onTap: () async {
+                  final picked = await showDatePicker(
+                    context: context,
+                    initialDate: selectedDate,
+                    firstDate: DateTime(2020),
+                    lastDate: DateTime.now(),
+                  );
+                  if (picked != null) {
+                    setState(() => selectedDate = picked);
+                  }
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                  decoration: BoxDecoration(
+                    color: Theme.of(ctx).colorScheme.surfaceContainerHighest,
+                    borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          const Icon(Icons.calendar_today, size: 20),
+                          const SizedBox(width: 12),
+                          Text(
+                            'Date: ${DateFormat('MMM d, yyyy').format(selectedDate)}',
+                            style: Theme.of(ctx).textTheme.titleMedium,
+                          ),
+                        ],
+                      ),
+                      const Icon(Icons.edit, size: 16),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              
+              // Route Type Dropdown
+              DropdownButtonFormField<RouteType>(
+                value: selectedRoute,
+                decoration: const InputDecoration(
+                  labelText: 'Route',
+                  prefixIcon: Icon(Icons.route),
+                ),
+                items: RouteType.values.map((route) {
+                  return DropdownMenuItem(
+                    value: route,
+                    child: Text(route.label),
+                  );
+                }).toList(),
+                onChanged: (val) {
+                  if (val != null) {
+                    setState(() {
+                      selectedRoute = val;
+                    });
+                    ref.read(tripServiceProvider).getRouteDistance(val).then((d) {
+                      distanceController.text = d > 0 ? d.toString() : '';
+                    });
+                  }
+                },
+              ),
+              const SizedBox(height: 12),
+              
+              TextField(
+                controller: distanceController,
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                decoration: const InputDecoration(
+                  labelText: 'Distance (km)',
+                  prefixIcon: Icon(Icons.straighten),
+                ),
+              ),
+              const SizedBox(height: 12),
+              
+              TextField(
+                controller: notesController,
+                decoration: const InputDecoration(
+                  labelText: 'Notes (optional)',
+                  prefixIcon: Icon(Icons.note_alt_outlined),
+                ),
+              ),
+              const SizedBox(height: 20),
+              
+              SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: FilledButton.icon(
+                  onPressed: () async {
+                    final km = double.tryParse(distanceController.text.trim());
+                    if (km == null || km <= 0) return;
+                    final notes = notesController.text.trim();
+
+                    if (selectedRoute == RouteType.custom) {
+                      await ref.read(tripServiceProvider).logCustomTrip(
+                            km,
+                            notes: notes.isNotEmpty ? notes : null,
+                            timestamp: selectedDate,
+                          );
+                    } else {
+                      final trip = Trip(
+                        id: const Uuid().v4(),
+                        timestamp: selectedDate,
+                        routeType: selectedRoute,
+                        distanceKm: km,
+                        notes: notes.isNotEmpty ? notes : null,
+                      );
+                      await ref.read(databaseServiceProvider).addTrip(trip);
+                    }
+                    
+                    ref.invalidate(todayTripsProvider);
+                    ref.invalidate(todayDistanceProvider);
+                    ref.invalidate(allTripsProvider);
+                    ref.invalidate(totalDistanceProvider);
+                    ref.invalidate(tripCountProvider);
+                    ref.invalidate(fuelRemainingProvider);
+                    ref.invalidate(estimatedRangeProvider);
+
+                    if (ctx.mounted) Navigator.pop(ctx);
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Missed trip logged — $km km'),
+                        ),
+                      );
+                    }
+                  },
+                  icon: const Icon(Icons.history),
+                  label: const Text('Log Missed Trip'),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -433,7 +671,7 @@ class QuickActions extends ConsumerWidget {
                 label: 'Fuel\nFilled',
                 color: AppTheme.accentOrange,
                 subtitle: '₹',
-                onTap: () => _showFuelSheet(context, ref),
+                onTap: () => QuickActions.showFuelSheet(context, ref),
                 isDisabled: !isCollegeActive, // Only refuel between college go and return
               ),
             ),
@@ -499,6 +737,18 @@ class QuickActions extends ConsumerWidget {
                 onTap: () => context.push(AppRoutes.dailyCosts),
               ),
             ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: _ActionButton(
+                icon: Icons.history,
+                label: 'Missed\nEntry',
+                color: AppTheme.accentPurple,
+                subtitle: 'Past',
+                onTap: () => _showMissedEntrySheet(context, ref),
+              ),
+            ),
+            const SizedBox(width: 10),
+            const Spacer(), // Placeholder for a 3rd button in the row
           ],
         ),
       ],

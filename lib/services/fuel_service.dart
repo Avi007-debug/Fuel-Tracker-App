@@ -20,6 +20,7 @@ class FuelService {
     required double pricePerLitre,
     bool isTankFull = false,
     String? receiptPhotoPath,
+    DateTime? timestamp,
   }) async {
     final litres = amountPaid / pricePerLitre;
     return _addFuelEntry(
@@ -28,6 +29,7 @@ class FuelService {
       pricePerLitre: pricePerLitre,
       isTankFull: isTankFull,
       receiptPhotoPath: receiptPhotoPath,
+      timestamp: timestamp,
     );
   }
 
@@ -37,6 +39,7 @@ class FuelService {
     required double pricePerLitre,
     bool isTankFull = false,
     String? receiptPhotoPath,
+    DateTime? timestamp,
   }) async {
     return _addFuelEntry(
       amountPaid: litresFilled * pricePerLitre,
@@ -44,6 +47,7 @@ class FuelService {
       pricePerLitre: pricePerLitre,
       isTankFull: isTankFull,
       receiptPhotoPath: receiptPhotoPath,
+      timestamp: timestamp,
     );
   }
 
@@ -53,6 +57,7 @@ class FuelService {
     required double pricePerLitre,
     required bool isTankFull,
     String? receiptPhotoPath,
+    DateTime? timestamp,
   }) async {
     final allEntries = await getAllEntries();
 
@@ -73,7 +78,7 @@ class FuelService {
 
     final entry = FuelEntry(
       id: _uuid.v4(),
-      timestamp: DateTime.now(),
+      timestamp: timestamp ?? DateTime.now(),
       amountPaid: amountPaid,
       litresFilled: litresFilled,
       pricePerLitre: pricePerLitre,
